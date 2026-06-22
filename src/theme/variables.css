@@ -1,0 +1,322 @@
+/*
+ * MathForge — Theme Variables
+ * Estética: escuro, quente, editorial, com toque de ouro.
+ */
+
+:root {
+  /* Ionic core overrides */
+  --ion-background-color: #07070d;
+  --ion-background-color-rgb: 7, 7, 13;
+  --ion-text-color: #f0ece4;
+  --ion-text-color-rgb: 240, 236, 228;
+  --ion-toolbar-background: #0e0e18;
+  --ion-tab-bar-background: #0e0e18;
+  --ion-tab-bar-color: #6a6270;
+  --ion-tab-bar-color-selected: #e8a838;
+  --ion-item-background: #141420;
+  --ion-card-background: #141420;
+  --ion-border-color: #2a2a3d;
+
+  /* Custom palette */
+  --ion-color-primary: #e8a838;
+  --ion-color-primary-rgb: 232, 168, 56;
+  --ion-color-primary-contrast: #07070d;
+  --ion-color-primary-contrast-rgb: 7, 7, 13;
+  --ion-color-primary-shade: #c4892a;
+  --ion-color-primary-tint: #f0bc5e;
+
+  --ion-color-danger: #e84057;
+  --ion-color-danger-rgb: 232, 64, 87;
+  --ion-color-danger-contrast: #ffffff;
+  --ion-color-danger-shade: #c83549;
+  --ion-color-danger-tint: #ea546a;
+
+  --ion-color-success: #38e89a;
+  --ion-color-success-rgb: 56, 232, 154;
+  --ion-color-success-contrast: #07070d;
+  --ion-color-success-shade: #2fcb87;
+  --ion-color-success-tint: #4ceba5;
+
+  --ion-color-medium: #6a6270;
+  --ion-color-medium-rgb: 106, 98, 112;
+  --ion-color-medium-contrast: #f0ece4;
+  --ion-color-medium-shand: #5c5562;
+  --ion-color-medium-tint: #79727e;
+
+  --ion-color-light: #141420;
+  --ion-color-light-rgb: 20, 20, 32;
+  --ion-color-light-contrast: #f0ece4;
+  --ion-color-light-contrast-rgb: 240, 236, 228;
+  --ion-color-light-shade: #111119;
+  --ion-color-light-tint: #2b2b3a;
+
+  /* Typography */
+  --ion-font-family: 'Source Serif 4', Georgia, serif;
+}
+
+/* Global overrides */
+
+ion-toolbar {
+  --background: #0e0e18;
+  --border-color: #2a2a3d;
+  --color: #f0ece4;
+  font-family: 'Source Serif 4', Georgia, serif;
+}
+
+ion-title {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+}
+
+ion-tab-button {
+  --color-selected: #e8a838;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+ion-card {
+  --background: #141420;
+  --border-radius: 16px;
+  --border-width: 1px;
+  --border-color: #2a2a3d;
+  --color: #f0ece4;
+  transition: border-color 0.25s ease, transform 0.25s ease;
+}
+
+ion-card:hover {
+  border-color: #e8a838;
+  transform: translateY(-2px);
+}
+
+ion-card-title {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 300;
+  font-size: 1.4rem;
+  color: #f0ece4;
+}
+
+ion-button {
+  --border-radius: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+ion-input,
+ion-textarea,
+ion-select {
+  --background: #0e0e18;
+  --border-color: #2a2a3d;
+  --border-radius: 10px;
+  --color: #f0ece4;
+  --placeholder-color: #6a6270;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+ion-input:focus-within,
+ion-textarea:focus-within,
+ion-select:focus-within {
+  --border-color: #e8a838;
+}
+
+ion-searchbar {
+  --background: #141420;
+  --border-radius: 10px;
+  --color: #f0ece4;
+  --placeholder-color: #6a6270;
+  --icon-color: #6a6270;
+  --box-shadow: none;
+}
+
+ion-chip {
+  --background: rgba(232, 168, 56, 0.12);
+  --color: #e8a838;
+  border: 1px solid rgba(232, 168, 56, 0.25);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+ion-segment {
+  --background: #0e0e18;
+}
+
+ion-segment-button {
+  --background-checked: #e8a838;
+  --color: #6a6270;
+  --color-checked: #07070d;
+  --indicator-color: #e8a838;
+  --border-radius: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+ion-modal {
+  --background: #0e0e18;
+  --border-radius: 20px;
+  --box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+}
+
+ion-toast {
+  --background: #141420;
+  --border-color: #e8a838;
+  --border-radius: 10px;
+  --color: #e8a838;
+  --button-color: #f0ece4;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+ion-fab-button {
+  --background: #e8a838;
+  --color: #07070d;
+  --border-radius: 14px;
+}
+
+ion-skeleton-text {
+  --background: rgba(232, 168, 56, 0.08);
+}
+
+/* Utility classes */
+
+.formula-preview-box {
+  background: #0a0a14;
+  border: 1px solid #2a2a3d;
+  border-radius: 10px;
+  padding: 1.5rem;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  overflow-x: auto;
+}
+
+.formula-preview-box .katex {
+  font-size: 1.5rem;
+  color: #f0ece4;
+}
+
+.formula-preview-box-large .katex {
+  font-size: 2.4rem;
+}
+
+.section-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #6a6270;
+  margin-bottom: 0.75rem;
+}
+
+.variable-pill {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 100px;
+  background: rgba(232, 168, 56, 0.12);
+  border: 1px solid rgba(232, 168, 56, 0.2);
+  color: #e8a838;
+  margin: 0.15rem;
+}
+
+.latex-code-block {
+  background: #0a0a14;
+  border: 1px solid #2a2a3d;
+  border-radius: 10px;
+  padding: 1.25rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  color: #e8a838;
+  line-height: 1.8;
+  overflow-x: auto;
+  word-break: break-all;
+  white-space: pre-wrap;
+}
+
+.toolbar-btn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  padding: 0.3rem 0.6rem;
+  background: #141420;
+  border: 1px solid #2a2a3d;
+  border-radius: 6px;
+  color: #b0a898;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toolbar-btn:hover,
+.toolbar-btn:active {
+  border-color: #e8a838;
+  color: #e8a838;
+  background: rgba(232, 168, 56, 0.1);
+}
+
+.hero-title {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 300;
+  font-size: clamp(2rem, 6vw, 3.5rem);
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  color: #f0ece4;
+  margin-bottom: 0.75rem;
+}
+
+.hero-title em {
+  font-style: italic;
+  color: #e8a838;
+}
+
+.hero-subtitle {
+  font-size: 1.05rem;
+  color: #b0a898;
+  line-height: 1.7;
+  max-width: 520px;
+}
+
+.stat-number {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 300;
+  font-size: 2.2rem;
+  color: #e8a838;
+  line-height: 1;
+}
+
+.stat-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #6a6270;
+}
+
+.empty-state-icon {
+  font-size: 3rem;
+  color: #2a2a3d;
+  margin-bottom: 1rem;
+}
+
+/* Ion grid personalização */
+ion-grid.formula-grid {
+  --ion-grid-columns: 12;
+}
+
+/* Grain overlay global */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+  opacity: 0.02;
+  pointer-events: none;
+  z-index: 99999;
+}
