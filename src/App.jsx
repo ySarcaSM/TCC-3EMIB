@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Switch, Route, Redirect, useLocation, useHistory } from 'react-router-dom';
-import { IonApp, IonIcon, IonSearchbar } from '@ionic/react';
+import { IonApp, IonIcon } from '@ionic/react';
 import {
-  homeOutline, peopleOutline, cubeOutline, documentTextOutline, flaskOutline, logOutOutline, searchOutline,
+  homeOutline, peopleOutline, cubeOutline, documentTextOutline, flaskOutline,
+  logOutOutline, searchOutline, sparklesOutline,
 } from 'ionicons/icons';
 import { loadDB } from './services/db';
 
@@ -12,10 +13,12 @@ import Clientes from './pages/Clientes';
 import Produtos from './pages/Produtos';
 import Orcamentos from './pages/Orcamentos';
 import Formulas from './pages/Formulas';
+import AiAssistant from './pages/AiAssistant';
 
 const NAV_ITEMS = [
   { section: 'Principal' },
   { key: 'dashboard', icon: homeOutline, label: 'Dashboard' },
+  { key: 'ai', icon: sparklesOutline, label: 'Assistente IA' },
   { section: 'Gestão' },
   { key: 'clientes', icon: peopleOutline, label: 'Clientes' },
   { key: 'produtos', icon: cubeOutline, label: 'Produtos' },
@@ -25,6 +28,7 @@ const NAV_ITEMS = [
 
 const PAGE_TITLES = {
   dashboard: 'Dashboard',
+  ai: 'Assistente IA',
   clientes: 'Clientes',
   produtos: 'Produtos',
   orcamentos: 'Orçamentos',
@@ -101,7 +105,8 @@ const AppLayout = ({ onLogout }) => {
         <Topbar />
         <div className="page-content">
           <Switch>
-            <Route exact path="/dashboard" render={(props) => <Dashboard {...props} />} />
+            <Route exact path="/dashboard" component={Dashboard} />
+            <Route exact path="/ai" component={AiAssistant} />
             <Route exact path="/clientes" component={Clientes} />
             <Route exact path="/produtos" component={Produtos} />
             <Route exact path="/orcamentos" component={Orcamentos} />
