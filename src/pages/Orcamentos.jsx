@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { IonModal, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonAlert, IonContent, IonToast } from '@ionic/react';
+import { IonModal, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonAlert, IonContent, IonToast, IonSearchbar } from '@ionic/react';
 import { closeOutline, calculatorOutline, informationCircleOutline } from 'ionicons/icons';
 import { getDB, saveDB, uid, fd, fc } from '../services/db';
 import { getAllFormulas } from '../services/formulaService';
@@ -75,6 +75,7 @@ export default function Orcamentos() {
   const [confirmApprove, setConfirmApprove] = useState(null);
   const [confirmNF, setConfirmNF] = useState(null);
   const [toast, setToast] = useState('');
+  const [search, setSearch] = useState('');
 
   // Fórmula state
   const [formulaId, setFormulaId] = useState('');
@@ -90,6 +91,12 @@ export default function Orcamentos() {
   const getFormulaName = (id) => allFormulas.find(f => f.id === id)?.nome || '—';
 
   let list = db.orcamentos;
+  if (search) list = list.filter(o =>
+    o.codigo.toLowerCase().includes(search.toLowerCase()) ||
+    o.descricao.toLowerCase().includes(search.toLowerCase()) ||
+    getClientName(o.clienteId).toLowerCase().includes(search.toLowerCase()) ||
+    getFormulaName(o.formulaId).toLowerCase().includes(search.toLowerCase())
+  );
   if (filter !== 'Todos') list = list.filter(o => o.status === filter);
 
   /* ─── Abrir modais ─── */
@@ -179,6 +186,12 @@ export default function Orcamentos() {
         )}</div>
         <button className="btn btn-primary" onClick={openNew}>+ Novo Orçamento</button>
       </div>
+       <IonSearchbar
+        value={search}
+        onIonInput={e => setSearch(e.detail.value)}
+        placeholder="Buscar por código, cliente, descrição ou fórmula..."
+        style={{ marginBottom: 16 }}
+      />
 
       {/* Table */}
       {list.length ? (

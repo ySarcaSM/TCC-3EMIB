@@ -8,8 +8,8 @@ import {
 import { getDB } from '../services/db';
 import { getAllFormulas } from '../services/formulaService';
 import {
-  getKey, saveKey, getSelectedModel, setSelectedModel,
-  callGemini, testKey, loadModels,
+  loadIAConfig, saveIAConfig, loadModels, testKey,
+  callGemini, loadHistory, clearHistory, saveHistoryLocally,
 } from '../services/aiService';
 
 /* ─── Sugestões ─── */
@@ -152,31 +152,47 @@ export default function AiAssistant() {
   const endRef = useRef(null);
 
   // Settings
-  const [apiKey, setApiKey] = useState(getKey());
-  const [model, setModel] = useState(getSelectedModel());
+  const [apiKey, setApiKey] = useState('');
+  const [model, setModel] = useState('gemini-2.0-flash');
   const [availableModels, setAvailableModels] = useState([]);
   const [modelsLoading, setModelsLoading] = useState(false);
   const [showKey, setShowKey] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState(null);
+  const [serverOnline, setServerOnline] = useState(false);
 
   useEffect(() => {
     if (endRef.current) endRef.current.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
-  // Load models on mount
+  // Init: load config, models, history
   useEffect(() => {
-    refreshModels();
+    init();
   }, []);
+
+  const init = async () => {
+    // Load config
+    const config = await loadIAConfig();
+    setApiKey(config.apiKey || '');
+    setModel(config.model || 'gemini-2.0-flash');
+    setServerOnline(config.online || false);
+
+    // Load models
+    refreshModels();
+
+    // Load history
+    const history = await loadHistory();
+    if (history.length > 0) setMessages(history);
+  };
 
   const refreshModels = useCallback(async () => {
     setModelsLoading(true);
     const list = await loadModels();
     setAvailableModels(list);
-    if (!list.includes(model)) {
+    const current = model;
+    if (!list.includes(current)) {
       const newModel = list[0] || 'gemini-2.0-flash';
       setModel(newModel);
-      setSelectedModel(newModel);
     }
     setModelsLoading(false);
   }, [model]);
@@ -190,64 +206,66 @@ export default function AiAssistant() {
     const msg = (text || input).trim();
     if (!msg || loading) return;
     setInput('');
-    setMessages(prev => [...prev, { role: 'user', content: msg }]);
+
+    const newMessages = [...messages, { role: 'user', content: msg }];
+    setMessages(newMessages);
     setLoading(true);
 
     try {
-      // Local first if no key
+      // Local response if no key
       const local = localResponse(msg);
-      if (local && !hasKey) {
+      if (!hasKey) {
         await new Promise(r => setTimeout(r, 400 + Math.random() * 600));
-        setMessages(prev => [...prev, { role: 'assistant', content: local, source: 'local' }]);
+        const reply = local || 'Configure a chave do Gemini nas Configurações para respostas avançadas.';
+        const updated = [...newMessages, { role: 'assistant', content: reply, source: 'local' }];
+        setMessages(updated);
+        saveHistoryLocally(updated);
         setLoading(false);
         return;
       }
 
-      // Call Gemini
-      if (hasKey) {
-        const systemMsg = { role: 'system', content: buildContext() };
-        const apiMessages = [
-          systemMsg,
-          ...messages.slice(-10).filter(m => m.role !== 'system').map(m => ({ role: m.role, content: m.content })),
-          { role: 'user', content: msg },
-        ];
-        const reply = await callGemini(apiMessages, model);
-        if (reply) {
-          setMessages(prev => [...prev, { role: 'assistant', content: reply, source: 'gemini' }]);
-          setLoading(false);
-          return;
-        }
+      // Call Gemini (server proxy or direct)
+      const systemMsg = { role: 'system', content: buildContext() };
+      const apiMessages = [
+        systemMsg,
+        ...messages.slice(-10).filter(m => m.role !== 'system').map(m => ({ role: m.role, content: m.content })),
+        { role: 'user', content: msg },
+      ];
+      const reply = await callGemini(apiMessages, model);
+
+      if (reply) {
+        const updated = [...newMessages, { role: 'assistant', content: reply, source: 'gemini' }];
+        setMessages(updated);
+        saveHistoryLocally(updated);
+        setLoading(false);
+        return;
       }
 
       // Fallback local
-      if (local) {
-        await new Promise(r => setTimeout(r, 400 + Math.random() * 600));
-        setMessages(prev => [...prev, { role: 'assistant', content: local, source: 'local' }]);
-      } else {
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          content: 'Não consegui responder. Abra as Configurações e configure sua chave do Google Gemini para respostas avançadas.',
-          source: 'local',
-        }]);
-      }
+      const fallback = local || 'Não consegui responder. Tente novamente.';
+      const updated = [...newMessages, { role: 'assistant', content: fallback, source: 'local' }];
+      setMessages(updated);
+      saveHistoryLocally(updated);
     } catch (err) {
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: err.message,
-        source: 'error',
-      }]);
+      const updated = [...newMessages, { role: 'assistant', content: err.message, source: 'error' }];
+      setMessages(updated);
+      saveHistoryLocally(updated);
     }
     setLoading(false);
   };
 
-  const clear = () => setMessages([]);
+  const clear = () => {
+    setMessages([]);
+    clearHistory();
+  };
+
   const copyMsg = (text) => {
     navigator.clipboard.writeText(text.replace(/\*\*/g, '').replace(/`/g, ''));
     showToast('Copiado!');
   };
 
-  const handleSaveKey = () => {
-    saveKey(apiKey);
+  const handleSaveKey = async () => {
+    await saveIAConfig(apiKey, model);
     showToast(hasKey ? 'Chave salva!' : 'Chave removida');
     if (hasKey) refreshModels();
   };
@@ -259,14 +277,14 @@ export default function AiAssistant() {
     setTestResult(result);
     setTesting(false);
     if (result.ok) {
-      saveKey(apiKey);
+      await saveIAConfig(apiKey, model);
       refreshModels();
     }
   };
 
-  const handleSelectModel = (m) => {
+  const handleSelectModel = async (m) => {
     setModel(m);
-    setSelectedModel(m);
+    await saveIAConfig(apiKey, m);
   };
 
   return (
@@ -282,6 +300,7 @@ export default function AiAssistant() {
             <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>Assistente IA</div>
             <div style={{ fontSize: 12, color: 'var(--muted)', fontFamily: "'DM Mono',monospace" }}>
               {hasKey ? `Gemini · ${model}` : 'Modo offline'}
+              {serverOnline && <span style={{ color: 'var(--green)', marginLeft: 8 }}>· Sincronizado</span>}
             </div>
           </div>
         </div>
@@ -310,6 +329,11 @@ export default function AiAssistant() {
             <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" style={{ color: '#4285f4', display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 6 }}>
               Gerar minha chave grátis <IonIcon icon={openOutline} style={{ fontSize: 12 }} />
             </a>
+          </div>
+
+          {/* Server status */}
+          <div style={{ marginBottom: 12, padding: '8px 12px', borderRadius: 8, background: serverOnline ? 'rgba(14,203,129,.06)' : 'rgba(255,165,0,.06)', border: `1px solid ${serverOnline ? 'rgba(14,203,129,.2)' : 'rgba(255,165,0,.2)'}`, fontSize: 12, color: serverOnline ? 'var(--green)' : '#e8a020' }}>
+            {serverOnline ? '✓ Servidor conectado — dados sincronizados com MongoDB' : 'Servidor offline — dados salvos apenas neste dispositivo'}
           </div>
 
           {/* Key input */}
@@ -389,7 +413,7 @@ export default function AiAssistant() {
                 type="button"
                 className="btn btn-ghost btn-sm"
                 onClick={refreshModels}
-                disabled={modelsLoading || !apiKey?.trim()}
+                disabled={modelsLoading}
                 title="Atualizar lista"
                 style={{ minWidth: 40 }}
               >

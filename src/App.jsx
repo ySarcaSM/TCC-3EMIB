@@ -3,9 +3,11 @@ import { BrowserRouter as Router, Switch, Route, Redirect, useLocation, useHisto
 import { IonApp, IonIcon } from '@ionic/react';
 import {
   homeOutline, peopleOutline, cubeOutline, documentTextOutline, flaskOutline,
-  logOutOutline, searchOutline, sparklesOutline,
+  logOutOutline, sparklesOutline,
 } from 'ionicons/icons';
 import { loadDB } from './services/db';
+import { loadFormulasFromServer } from './services/formulaService';
+import { api } from './services/api';
 
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -42,21 +44,12 @@ const Sidebar = ({ onLogout }) => {
 
   return (
     <div className="sidebar">
-      <div className="sb-header">
-        <div className="mark">A</div>
-        <span>angler</span>
-      </div>
+      <div className="sb-header"><div className="mark">A</div><span>angler</span></div>
       <nav className="sb-nav">
         {NAV_ITEMS.map((item, i) => {
-          if (item.section) {
-            return <div key={'s' + i} className="sb-section">{item.section}</div>;
-          }
+          if (item.section) return <div key={'s' + i} className="sb-section">{item.section}</div>;
           return (
-            <div
-              key={item.key}
-              className={`sb-item ${currentPage === item.key ? 'active' : ''}`}
-              onClick={() => history.push('/' + item.key)}
-            >
+            <div key={item.key} className={`sb-item ${currentPage === item.key ? 'active' : ''}`} onClick={() => history.push('/' + item.key)}>
               <IonIcon icon={item.icon} style={{ width: 18, height: 18, opacity: currentPage === item.key ? 1 : 0.7 }} />
               {item.label}
             </div>
@@ -82,22 +75,14 @@ const Sidebar = ({ onLogout }) => {
 const Topbar = () => {
   const location = useLocation();
   const currentPage = location.pathname.replace('/', '') || 'dashboard';
-  const title = PAGE_TITLES[currentPage] || 'Dashboard';
-
   return (
     <div className="topbar">
-      <h1>{title}</h1>
-      <div className="topbar-right">
-        <div className="search-box">
-          <IonIcon icon={searchOutline} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', width: 16, height: 16, color: 'var(--muted)' }} />
-          <input type="text" placeholder="Buscar..." />
-        </div>
-      </div>
+      <h1>{PAGE_TITLES[currentPage] || 'Dashboard'}</h1>
     </div>
   );
 };
 
-const AppLayout = ({ onLogout }) => {
+const AppLayout = ({ onLogout, username }) => {
   return (
     <div className="app-layout">
       <Sidebar onLogout={onLogout} />
@@ -120,14 +105,50 @@ const AppLayout = ({ onLogout }) => {
 };
 
 const App = () => {
-  const [loggedIn, setLoggedIn] = useState(false);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => { loadDB(); }, []);
+  useEffect(() => {
+    const token = localStorage.getItem('angler_token');
+    if (token) {
+      api.verify()
+        .then(async (data) => {
+          await Promise.all([loadDB(), loadFormulasFromServer()]);
+          setUser(data.username);
+        })
+        .catch(() => {
+          localStorage.removeItem('angler_token');
+        })
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
+  }, []);
 
-  if (!loggedIn) {
+  const handleLogin = async (username) => {
+    await Promise.all([loadDB(), loadFormulasFromServer()]);
+    setUser(username);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('angler_token');
+    setUser(null);
+  };
+
+  if (loading) {
     return (
       <IonApp>
-        <Login onLogin={() => setLoggedIn(true)} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: 'var(--muted)', fontSize: 14 }}>
+          Carregando...
+        </div>
+      </IonApp>
+    );
+  }
+
+  if (!user) {
+    return (
+      <IonApp>
+        <Login onLogin={handleLogin} />
       </IonApp>
     );
   }
@@ -135,7 +156,7 @@ const App = () => {
   return (
     <IonApp>
       <Router>
-        <AppLayout onLogout={() => setLoggedIn(false)} />
+        <AppLayout onLogout={handleLogout} username={user} />
       </Router>
     </IonApp>
   );

@@ -1,94 +1,76 @@
-const KEYS_STORAGE = 'angler_gemini_key';
-const MODELS_CACHE = 'angler_gemini_models';
-const MODEL_STORAGE = 'angler_gemini_model';
+import { api } from './api';
 
-/* ─── Friendly errors ─── */
-function friendlyError(err) {
-  const msg = err.message || String(err);
+let serverAvailable = false;
 
-  if (msg.includes('quota') || msg.includes('rate') || msg.includes('429')) {
-    return 'Você usou muitas perguntas seguidas. Aguarde 1 minuto e tente de novo. Se estiver no plano gratuito, o limite diário pode ter acabado.';
-  }
-  if (msg.includes('401') || msg.includes('invalid') || msg.includes('API key')) {
-    return 'Sua chave de API parece estar errada. Copie novamente do site do Google AI Studio e cole aqui.';
-  }
-  if (msg.includes('not found') || msg.includes('not supported') || msg.includes('404')) {
-    return 'O modelo escolhido não está mais disponível. Clique no botão de atualizar modelos para ver os disponíveis.';
-  }
-  if (msg.includes('high demand') || msg.includes('overloaded') || msg.includes('503') || msg.includes('529')) {
-    return 'O Gemini está com muita gente usando agora. Espere 1 minutinho e tente de novo.';
-  }
-  if (msg.includes('billing') || msg.includes('payment') || msg.includes('plan')) {
-    return 'Seu plano precisa de atenção. Acesse o Google AI Studio para verificar.';
-  }
-  if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('ERR_NETWORK')) {
-    return 'Não consegui conectar com o Google. Verifique sua internet e tente novamente.';
-  }
-  return 'Algo deu errado. Tente novamente em alguns instantes. Se o problema continuar, gere uma nova chave no Google AI Studio.';
-}
-
-/* ─── Key management ─── */
-export function getKey() {
-  return localStorage.getItem(KEYS_STORAGE) || '';
-}
-export function saveKey(key) {
-  localStorage.setItem(KEYS_STORAGE, key);
-}
-
-/* ─── Model management ─── */
-export function getSelectedModel() {
-  return localStorage.getItem(MODEL_STORAGE) || 'gemini-2.0-flash';
-}
-export function setSelectedModel(model) {
-  localStorage.setItem(MODEL_STORAGE, model);
-}
-
-/* ─── Fetch available models ─── */
-export async function fetchModels() {
-  const key = getKey();
-  if (!key?.trim()) return null;
-
+async function checkServer() {
   try {
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
-    if (!r.ok) return null;
-    const data = await r.json();
-    const genModels = (data.models || [])
-      .filter(m => m.supportedGenerationMethods?.includes('generateContent'))
-      .map(m => m.name.replace('models/', ''))
-      .sort();
-    if (genModels.length > 0) {
-      localStorage.setItem(MODELS_CACHE, JSON.stringify({ models: genModels, ts: Date.now() }));
-      return genModels;
-    }
-    return null;
+    const resp = await fetch('/api/health', { signal: AbortSignal.timeout(2000) });
+    serverAvailable = resp.ok;
   } catch {
-    return null;
+    serverAvailable = false;
+  }
+  return serverAvailable;
+}
+
+// Config
+export async function loadIAConfig() {
+  const online = await checkServer();
+  if (online) {
+    try {
+      const config = await api.getIAConfig();
+      return { apiKey: config.apiKey || '', model: config.model || 'gemini-2.0-flash', online: true };
+    } catch {}
+  }
+  return {
+    apiKey: localStorage.getItem('angler_gemini_key') || '',
+    model: localStorage.getItem('angler_gemini_model') || 'gemini-2.0-flash',
+    online: false,
+  };
+}
+
+export async function saveIAConfig(apiKey, model) {
+  localStorage.setItem('angler_gemini_key', apiKey || '');
+  localStorage.setItem('angler_gemini_model', model || 'gemini-2.0-flash');
+  const online = await checkServer();
+  if (online) {
+    try { await api.saveIAConfig(apiKey, model); } catch {}
   }
 }
 
-export function getCachedModels() {
-  try {
-    const cache = JSON.parse(localStorage.getItem(MODELS_CACHE));
-    if (cache && Date.now() - cache.ts < 1000 * 60 * 60) return cache.models;
-  } catch {}
-  return null;
-}
-
+// Models
 export async function loadModels() {
-  const cached = getCachedModels();
-  if (cached) return cached;
-  const fresh = await fetchModels();
-  if (fresh) return fresh;
-  return ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-1.5-pro', 'gemini-1.5-flash'];
+  const online = await checkServer();
+  if (online) {
+    try {
+      const data = await api.getModels();
+      if (data.models?.length > 0) return data.models;
+    } catch {}
+  }
+  // Fallback: tentar diretamente com chave do localStorage
+  const key = localStorage.getItem('angler_gemini_key');
+  if (key) {
+    try {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+      if (r.ok) {
+        const data = await r.json();
+        const models = (data.models || [])
+          .filter(m => m.supportedGenerationMethods?.includes('generateContent'))
+          .map(m => m.name.replace('models/', ''))
+          .sort();
+        if (models.length > 0) return models;
+      }
+    } catch {}
+  }
+  return ['gemini-2.0-flash', 'gemini-2.5-flash', 'gemini-2.5-pro'];
 }
 
-/* ─── Test key ─── */
-export async function testKey(key) {
-  if (!key?.trim()) return { ok: false, msg: 'Digite a chave de API primeiro.' };
+// Test key
+export async function testKey(apiKey) {
+  if (!apiKey?.trim()) return { ok: false, msg: 'Cole a chave de API primeiro.' };
   try {
-    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
     if (!r.ok) {
-      if (r.status === 400) return { ok: false, msg: 'Chave inválida. Verifique se copiou corretamente do Google AI Studio.' };
+      if (r.status === 400) return { ok: false, msg: 'Chave inválida. Verifique se copiou corretamente.' };
       return { ok: false, msg: `Erro ${r.status}. Tente novamente.` };
     }
     const data = await r.json();
@@ -99,12 +81,19 @@ export async function testKey(key) {
   }
 }
 
-/* ─── Call Gemini ─── */
-export async function callGemini(messages, modelOverride) {
-  const key = getKey();
-  if (!key) throw new Error('Chave de API não configurada. Abra as Configurações e cole sua chave do Google AI Studio.');
+// Chat — tenta server proxy, fallback direto pro Gemini
+export async function callGemini(messages, model) {
+  const online = await checkServer();
+  if (online) {
+    try {
+      const reply = await api.chat(messages, model);
+      return reply.reply || '';
+    } catch {}
+  }
 
-  const model = modelOverride || getSelectedModel();
+  // Fallback: chamar Gemini direto do browser
+  const key = localStorage.getItem('angler_gemini_key');
+  if (!key) throw new Error('Configure a chave do Gemini nas Configurações.');
 
   const systemMsg = messages.find(m => m.role === 'system');
   const contents = messages.filter(m => m.role !== 'system').map(m => ({
@@ -114,20 +103,43 @@ export async function callGemini(messages, modelOverride) {
   const body = { contents };
   if (systemMsg) body.systemInstruction = { parts: [{ text: systemMsg.content }] };
 
-  try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
-    const resp = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    if (!resp.ok) {
-      const err = await resp.json().catch(() => ({}));
-      throw new Error(err.error?.message || `Erro ${resp.status}`);
-    }
-    const data = await resp.json();
-    return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-  } catch (err) {
-    throw new Error(friendlyError(err));
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model || 'gemini-2.0-flash'}:generateContent?key=${key}`;
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    const errMsg = err.error?.message || `Erro ${resp.status}`;
+    if (errMsg.includes('quota') || errMsg.includes('429')) throw new Error('Limite atingido. Aguarde 1 minuto.');
+    if (errMsg.includes('not found')) throw new Error('Modelo não disponível. Atualize a lista.');
+    if (errMsg.includes('high demand') || errMsg.includes('503')) throw new Error('Muita gente usando. Espere 1 minuto.');
+    throw new Error('Erro ao conectar. Tente novamente.');
   }
+
+  const data = await resp.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
+
+// History
+export async function loadHistory() {
+  const online = await checkServer();
+  if (online) {
+    try { return await api.getHistory(); } catch {}
+  }
+  try { return JSON.parse(localStorage.getItem('angler_chat_history')) || []; } catch { return []; }
+}
+
+export async function clearHistory() {
+  localStorage.removeItem('angler_chat_history');
+  const online = await checkServer();
+  if (online) {
+    try { await api.clearHistory(); } catch {}
+  }
+}
+
+export function saveHistoryLocally(messages) {
+  localStorage.setItem('angler_chat_history', JSON.stringify(messages.slice(-100)));
 }
