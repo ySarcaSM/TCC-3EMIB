@@ -1,52 +1,22 @@
 import React from 'react';
-import { IonGrid, IonRow, IonCol } from '@ionic/react';
 
 const SYMBOLS = [
-  { label: 'frac', insert: '\\frac{}{}' },
-  { label: '√', insert: '\\sqrt{}' },
-  { label: '²', insert: '^2' },
-  { label: 'ⁿ', insert: '^n' },
-  { label: '₁', insert: '_1' },
-  { label: '∫', insert: '\\int_{}^{} ' },
-  { label: 'Σ', insert: '\\sum_{i=1}^{n} ' },
-  { label: 'Π', insert: '\\prod_{i=1}^{n} ' },
-  { label: 'lim', insert: '\\lim_{x \\to }' },
-  { label: '∞', insert: '\\infty' },
-  { label: 'π', insert: '\\pi' },
-  { label: 'θ', insert: '\\theta' },
-  { label: 'α', insert: '\\alpha' },
-  { label: 'β', insert: '\\beta' },
-  { label: '±', insert: '\\pm' },
-  { label: '·', insert: '\\cdot' },
-  { label: '×', insert: '\\times' },
-  { label: '÷', insert: '\\div' },
-  { label: '≠', insert: '\\neq' },
-  { label: '≈', insert: '\\approx' },
-  { label: '≤', insert: '\\leq' },
-  { label: '≥', insert: '\\geq' },
-  { label: '()', insert: '\\left( \\right)' },
-  { label: '[]', insert: '\\left[ \\right]' },
-  { label: '{}', insert: '\\left\\{ \\right\\}' },
+  { l: 'frac', i: '\\frac{}{}' }, { l: '√', i: '\\sqrt{}' }, { l: '²', i: '^2' }, { l: 'ⁿ', i: '^n' },
+  { l: '₁', i: '_1' }, { l: '∫', i: '\\int_{}^{} ' }, { l: 'Σ', i: '\\sum_{i=1}^{n} ' },
+  { l: 'lim', i: '\\lim_{x \\to }' }, { l: '∞', i: '\\infty' }, { l: 'π', i: '\\pi' },
+  { l: 'θ', i: '\\theta' }, { l: 'α', i: '\\alpha' }, { l: 'β', i: '\\beta' },
+  { l: '±', i: '\\pm' }, { l: '·', i: '\\cdot' }, { l: '×', i: '\\times' },
+  { l: '÷', i: '\\div' }, { l: '≠', i: '\\neq' }, { l: '≈', i: '\\approx' },
+  { l: '≤', i: '\\leq' }, { l: '≥', i: '\\geq' },
+  { l: '()', i: '\\left( \\right)' }, { l: '[]', i: '\\left[ \\right]' },
 ];
 
-const LatexToolbar = ({ onInsert }) => {
+export default function LatexToolbar({ onInsert }) {
   return (
-    <IonGrid style={{ padding: '0.5rem' }}>
-      <IonRow>
-        {SYMBOLS.map((sym) => (
-          <IonCol size="auto" key={sym.label} style={{ padding: '2px' }}>
-            <button
-              className="toolbar-btn"
-              onClick={() => onInsert(sym.insert)}
-              title={sym.insert}
-            >
-              {sym.label}
-            </button>
-          </IonCol>
-        ))}
-      </IonRow>
-    </IonGrid>
+    <div className="latex-toolbar">
+      {SYMBOLS.map(s => (
+        <button key={s.l} className="latex-toolbar-btn" onClick={() => onInsert(s.i)} title={s.i}>{s.l}</button>
+      ))}
+    </div>
   );
-};
-
-export default LatexToolbar;
+}

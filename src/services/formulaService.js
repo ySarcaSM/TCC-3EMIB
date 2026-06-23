@@ -1,87 +1,67 @@
-const STORAGE_KEY = 'mathforge_formulas';
-const VERSION_KEY = 'mathforge_version';
-const CURRENT_VERSION = '2.0';
+const STORAGE_KEY = 'angler_formulas';
 
-function loadFromStorage() {
+function load() {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch {
-    // fallback
-  }
+    const s = localStorage.getItem(STORAGE_KEY);
+    if (s) return JSON.parse(s);
+  } catch {}
   return null;
 }
 
-function saveToStorage(formulas) {
+function save(formulas) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(formulas));
 }
 
-function getFormulas() {
-  const storedVersion = localStorage.getItem(VERSION_KEY);
-  if (storedVersion !== CURRENT_VERSION) {
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.setItem(VERSION_KEY, CURRENT_VERSION);
-  }
-
-  let formulas = loadFromStorage();
-  if (!formulas) {
-    formulas = [];
-    saveToStorage(formulas);
-  }
-  return formulas;
+function getAll() {
+  let f = load();
+  if (!f) { f = []; save(f); }
+  return f;
 }
 
-function extractVariables(latex) {
+function extractVariables(latex, constantes = []) {
   if (!latex) return [];
   const cleaned = latex.replace(/\\[a-zA-Z]+/g, '').replace(/[^a-zA-Z]/g, ' ');
-  const words = cleaned.split(/\s+/).filter((w) => w.length === 1 && /[a-zA-Z]/.test(w));
-  const ignore = new Set(['d', 'e', 'x']);
-  return [...new Set(words.filter((v) => !ignore.has(v)))].sort();
+  const words = cleaned.split(/\s+/).filter(w => w.length >= 1 && /^[a-zA-Z]+$/.test(w));
+  const ignore = new Set(['d', 'e', 'x', 'dx', 'dt', 'dy', 'dz']);
+  const constNames = new Set((constantes || []).map(c => c.nome.toLowerCase()));
+  return [...new Set(words.filter(v => !ignore.has(v) && !constNames.has(v.toLowerCase())))].sort();
 }
 
-export function getAllFormulas() {
-  return getFormulas();
-}
-
-export function getFormulaById(id) {
-  return getFormulas().find((f) => f.id === id) || null;
-}
+export function getAllFormulas() { return getAll(); }
+export function getFormulaById(id) { return getAll().find(f => f.id === id) || null; }
 
 export function createFormula({ nome, latex, descricao, constantes }) {
-  const formulas = getFormulas();
-  const newFormula = {
+  const formulas = getAll();
+  const consts = constantes || [];
+  const f = {
     id: 'f' + Date.now(),
     nome: nome || 'Sem nome',
     latex: latex || '',
     descricao: descricao || '',
-    variaveis: extractVariables(latex),
-    constantes: constantes || [],
+    variaveis: extractVariables(latex, consts),
+    constantes: consts,
     criadoEm: new Date().toISOString().split('T')[0],
     favorito: false,
   };
-  formulas.push(newFormula);
-  saveToStorage(formulas);
-  return newFormula;
+  formulas.push(f);
+  save(formulas);
+  return f;
 }
 
 export function updateFormula(id, updates) {
-  const formulas = getFormulas();
-  const index = formulas.findIndex((f) => f.id === id);
-  if (index === -1) return null;
-
-  if (updates.latex !== undefined) {
-    updates.variaveis = extractVariables(updates.latex);
+  const formulas = getAll();
+  const idx = formulas.findIndex(f => f.id === id);
+  if (idx === -1) return null;
+  const merged = { ...formulas[idx], ...updates };
+  if (updates.latex !== undefined || updates.constantes !== undefined) {
+    updates.variaveis = extractVariables(merged.latex, merged.constantes);
   }
-
-  formulas[index] = { ...formulas[index], ...updates };
-  saveToStorage(formulas);
-  return formulas[index];
+  formulas[idx] = { ...formulas[idx], ...updates };
+  save(formulas);
+  return formulas[idx];
 }
 
 export function deleteFormula(id) {
-  const formulas = getFormulas().filter((f) => f.id !== id);
-  saveToStorage(formulas);
+  save(getAll().filter(f => f.id !== id));
   return true;
 }

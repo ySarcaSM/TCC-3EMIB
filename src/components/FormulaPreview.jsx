@@ -1,33 +1,25 @@
 import React, { useEffect, useRef } from 'react';
 
-const FormulaPreview = ({ latex, large = false }) => {
+export default function FormulaPreview({ latex, large = false, card = false }) {
   const ref = useRef(null);
 
   useEffect(() => {
     if (ref.current && window.katex && latex) {
       try {
-        window.katex.render(latex, ref.current, {
-          throwOnError: false,
-          displayMode: true,
-          output: 'html',
-        });
+        window.katex.render(latex, ref.current, { throwOnError: false, displayMode: true, output: 'html' });
       } catch {
-        if (ref.current) {
-          ref.current.innerHTML =
-            '<span style="color:#e84057;font-family:JetBrains Mono,monospace;font-size:0.8rem;">Erro na expressão</span>';
-        }
+        if (ref.current) ref.current.innerHTML = '<span style="color:var(--red);font-family:DM Mono,monospace;font-size:0.8rem;">Erro</span>';
       }
     } else if (ref.current && !latex) {
       ref.current.innerHTML = '';
     }
   }, [latex]);
 
-  return (
-    <div
-      ref={ref}
-      className={`formula-preview-box ${large ? 'formula-preview-box-large' : ''}`}
-    />
-  );
-};
+  const cls = [
+    'formula-preview-box',
+    large ? 'formula-preview-box-large' : '',
+    card ? 'formula-preview-card' : '',
+  ].filter(Boolean).join(' ');
 
-export default FormulaPreview;
+  return <div ref={ref} className={cls} />;
+}

@@ -34,9 +34,11 @@ import {
   checkmarkCircleOutline,
   closeOutline,
   saveOutline,
+  calculatorOutline,
 } from 'ionicons/icons';
 import FormulaPreview from '../components/FormulaPreview';
 import LatexToolbar from '../components/LatexToolbar';
+import FormulaCalculator from '../components/FormulaCalculator';
 import {
   getFormulaById,
   updateFormula,
@@ -52,6 +54,7 @@ const FormulaDetail = ({ match, history }) => {
   const [toastColor, setToastColor] = useState('primary');
   const [showActions, setShowActions] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showCalcModal, setShowCalcModal] = useState(false);
 
   const [editNome, setEditNome] = useState('');
   const [editLatex, setEditLatex] = useState('');
@@ -207,6 +210,18 @@ const FormulaDetail = ({ match, history }) => {
           <FormulaPreview latex={formula.latex} large />
         </div>
 
+        {/* Botão calcular */}
+        <div style={{ padding: '0 1.5rem 1rem' }}>
+          <IonButton
+            expand="block"
+            color="success"
+            onClick={() => setShowCalcModal(true)}
+          >
+            <IonIcon icon={calculatorOutline} slot="start" />
+            Calcular com esta fórmula
+          </IonButton>
+        </div>
+
         {/* Chips */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0 1.5rem 1rem', flexWrap: 'wrap' }}>
           {formula.favorito && (
@@ -278,20 +293,24 @@ const FormulaDetail = ({ match, history }) => {
                         style={{
                           fontFamily: 'JetBrains Mono, monospace',
                           fontSize: '0.9rem',
-                          fontWeight: 500,
+                          fontWeight: 600,
                           color: '#e8a838',
                           minWidth: '28px',
                         }}
                       >
                         {c.nome}
                       </span>
-                      <span style={{ color: '#6a6270', fontSize: '0.8rem' }}>=</span>
+                      <span style={{ color: '#6a6270', fontSize: '0.8rem', flexShrink: 0 }}>=</span>
                       <span
                         style={{
                           fontFamily: 'JetBrains Mono, monospace',
                           fontSize: '0.9rem',
                           color: '#f0ece4',
                           fontWeight: 400,
+                          background: '#141420',
+                          border: '1px solid #2a2a3d',
+                          borderRadius: '4px',
+                          padding: '0.15rem 0.5rem',
                         }}
                       >
                         {c.valor}
@@ -366,15 +385,7 @@ const FormulaDetail = ({ match, history }) => {
                   }}
                 >
                   <div className="section-label">ID</div>
-                  <div
-                    style={{
-                      fontFamily: 'JetBrains Mono, monospace',
-                      fontSize: '0.75rem',
-                      color: '#b0a898',
-                      wordBreak: 'break-all',
-                      marginTop: '0.25rem',
-                    }}
-                  >
+                  <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '0.75rem', color: '#b0a898', wordBreak: 'break-all', marginTop: '0.25rem' }}>
                     {formula.id}
                   </div>
                 </div>
@@ -393,15 +404,7 @@ const FormulaDetail = ({ match, history }) => {
                   }}
                 >
                   <div className="section-label">Variáveis</div>
-                  <div
-                    style={{
-                      fontFamily: 'Cormorant Garamond, serif',
-                      fontSize: '1.8rem',
-                      fontWeight: 300,
-                      color: '#e8a838',
-                      marginTop: '0.25rem',
-                    }}
-                  >
+                  <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', fontWeight: 300, color: '#e8a838', marginTop: '0.25rem' }}>
                     {formula.variaveis ? formula.variaveis.length : 0}
                   </div>
                 </div>
@@ -420,15 +423,7 @@ const FormulaDetail = ({ match, history }) => {
                   }}
                 >
                   <div className="section-label">Constantes</div>
-                  <div
-                    style={{
-                      fontFamily: 'Cormorant Garamond, serif',
-                      fontSize: '1.8rem',
-                      fontWeight: 300,
-                      color: '#e8a838',
-                      marginTop: '0.25rem',
-                    }}
-                  >
+                  <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.8rem', fontWeight: 300, color: '#e8a838', marginTop: '0.25rem' }}>
                     {formula.constantes ? formula.constantes.length : 0}
                   </div>
                 </div>
@@ -574,6 +569,17 @@ const FormulaDetail = ({ match, history }) => {
               </IonButton>
             </div>
           </IonContent>
+        </IonModal>
+
+        {/* Modal de Calculadora */}
+        <IonModal
+          isOpen={showCalcModal}
+          onDidDismiss={() => setShowCalcModal(false)}
+        >
+          <FormulaCalculator
+            formula={formula}
+            onDismiss={() => setShowCalcModal(false)}
+          />
         </IonModal>
 
         <IonToast

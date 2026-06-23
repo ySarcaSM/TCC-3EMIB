@@ -104,19 +104,27 @@ const Editor = ({ match }) => {
       return;
     }
 
+    const name = constName.trim();
+    const value = constValue.trim();
+
     const duplicate = constantes.find(
-      (c) => c.nome.toLowerCase() === constName.trim().toLowerCase()
+      (c) => c.nome.toLowerCase() === name.toLowerCase()
     );
     if (duplicate) {
-      toast(`Constante "${constName.trim()}" já existe`, 'danger');
+      toast(`Constante "${name}" já existe`, 'danger');
+      return;
+    }
+
+    if (name === value) {
+      toast('Nome e valor da constante não podem ser iguais', 'danger');
       return;
     }
 
     setConstantes((prev) => [
       ...prev,
       {
-        nome: constName.trim(),
-        valor: constValue.trim(),
+        nome: name,
+        valor: value,
         descricao: constDesc.trim(),
       },
     ]);
@@ -173,15 +181,26 @@ const Editor = ({ match }) => {
     }
   }, [nome, latex, descricao, constantes, editId, toast]);
 
-  const detectVariables = (lx) => {
+  const detectVariables = (lx, consts) => {
     if (!lx) return [];
     const cleaned = lx.replace(/\\[a-zA-Z]+/g, '').replace(/[^a-zA-Z]/g, ' ');
-    return [...new Set(
-      cleaned.split(/\s+/).filter((w) => w.length === 1 && /[a-zA-Z]/.test(w) && !['d', 'e', 'x'].includes(w))
-    )].sort();
+    const words = cleaned
+      .split(/\s+/)
+      .filter((w) => w.length >= 1 && /^[a-zA-Z]+$/.test(w));
+    const ignore = new Set(['d', 'e', 'x', 'dx', 'dt', 'dy', 'dz']);
+    const constantNames = new Set(
+      (consts || []).map((c) => c.nome.toLowerCase())
+    );
+    return [
+      ...new Set(
+        words.filter(
+          (v) => !ignore.has(v) && !constantNames.has(v.toLowerCase())
+        )
+      ),
+    ].sort();
   };
 
-  const variaveis = detectVariables(latex);
+  const variaveis = detectVariables(latex, constantes);
 
   return (
     <IonPage>
