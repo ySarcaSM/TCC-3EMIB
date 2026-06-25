@@ -81,17 +81,8 @@ export async function testKey(apiKey) {
   }
 }
 
-// Chat — tenta server proxy, fallback direto pro Gemini
+// Chat — prioriza server, fallback direto (sem duplicar)
 export async function callGemini(messages, model) {
-  const online = await checkServer();
-  if (online) {
-    try {
-      const reply = await api.chat(messages, model);
-      return reply.reply || '';
-    } catch {}
-  }
-
-  // Fallback: chamar Gemini direto do browser
   const key = localStorage.getItem('angler_gemini_key');
   if (!key) throw new Error('Configure a chave do Gemini nas Configurações.');
 
@@ -103,7 +94,22 @@ export async function callGemini(messages, model) {
   const body = { contents };
   if (systemMsg) body.systemInstruction = { parts: [{ text: systemMsg.content }] };
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model || 'gemini-2.0-flash'}:generateContent?key=${key}`;
+  const useModel = model || 'gemini-2.0-flash';
+
+  // Tenta server proxy primeiro
+  const online = await checkServer();
+  if (online) {
+    try {
+      const reply = await api.chat(messages, useModel);
+      return reply.reply || '';
+    } catch (err) {
+      // Se o server respondeu, NÃO tenta direto (evita gastar 2x)
+      throw err;
+    }
+  }
+
+  // Fallback: chamar direto só quando server offline
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${useModel}:generateContent?key=${key}`;
   const resp = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -113,9 +119,12 @@ export async function callGemini(messages, model) {
   if (!resp.ok) {
     const err = await resp.json().catch(() => ({}));
     const errMsg = err.error?.message || `Erro ${resp.status}`;
-    if (errMsg.includes('quota') || errMsg.includes('429')) throw new Error('Limite atingido. Aguarde 1 minuto.');
-    if (errMsg.includes('not found')) throw new Error('Modelo não disponível. Atualize a lista.');
-    if (errMsg.includes('high demand') || errMsg.includes('503')) throw new Error('Muita gente usando. Espere 1 minuto.');
+    if (errMsg.includes('quota') || errMsg.includes('429') || resp.status === 429) {
+      throw new Error('Limite diário atingido. Aguarde até amanhã ou ative o faturamento no Google AI Studio para mais requisições.');
+    }
+    if (errMsg.includes('not found') || resp.status === 404) throw new Error('Modelo não disponível. Atualize a lista.');
+    if (errMsg.includes('high demand') || resp.status === 503) throw new Error('Muita gente usando. Espere 1 minuto.');
+    if (resp.status === 403) throw new Error('Acesso negado. Verifique se a API Generative Language está ativada no projeto do Google Cloud.');
     throw new Error('Erro ao conectar. Tente novamente.');
   }
 
