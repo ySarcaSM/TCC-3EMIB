@@ -3,8 +3,8 @@ import { IonIcon, IonToast } from '@ionic/react';
 import { logInOutline, personAddOutline } from 'ionicons/icons';
 import { api } from '../services/api';
 
-export default function Login({ onLogin }) {
-  const [mode, setMode] = useState('login');
+export default function Login({ onLogin, initialMode }) {
+  const [mode, setMode] = useState(initialMode || 'login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -34,12 +34,11 @@ export default function Login({ onLogin }) {
 
   return (
     <div style={{
-      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'var(--bg)', padding: 20,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'var(--card)', padding: 24,
     }}>
       <div style={{
-        width: '100%', maxWidth: 380, background: 'var(--card)',
-        border: '1px solid var(--border)', borderRadius: 16, padding: 32,
+        width: '100%', maxWidth: 380,
       }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
