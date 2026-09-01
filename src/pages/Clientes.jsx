@@ -33,7 +33,6 @@ export default function Clientes() {
 
   const viewC = modal?.mode === 'view' ? db.clientes.find(c => c.id === modal.id) : null;
   const viewOrcs = viewC ? db.orcamentos.filter(o => o.clienteId === viewC.id) : [];
-  const viewNfs = viewC ? db.notasFiscais.filter(n => n.clienteId === viewC.id) : [];
   const viewTotal = viewOrcs.reduce((a, o) => a + (o.itens || []).reduce((s, i) => s + i.qtd * i.valor, 0), 0);
 
   const tabs = ['Todos', 'Ativo', 'Inativo'];
@@ -119,7 +118,7 @@ export default function Clientes() {
             <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--border)', display: 'flex', gap: 24 }}>
               <span style={{ fontSize: 13, color: 'var(--muted)' }}>Orçamentos: <strong style={{ color: 'var(--text)' }}>{viewOrcs.length}</strong></span>
               <span style={{ fontSize: 13, color: 'var(--muted)' }}>Volume: <strong style={{ color: 'var(--primary)' }}>{fc(viewTotal)}</strong></span>
-              <span style={{ fontSize: 13, color: 'var(--muted)' }}>NFs: <strong style={{ color: 'var(--green)' }}>{viewNfs.length}</strong></span>
+
             </div>
           </div>
         </IonContent>

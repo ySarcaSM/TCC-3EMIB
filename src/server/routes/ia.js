@@ -16,13 +16,12 @@ async function fetchUserData(username) {
     clientes: results[0]?.data?.clientes || [],
     produtos: results[1]?.data?.produtos || [],
     orcamentos: results[2]?.data?.orcamentos || [],
-    notasFiscais: results[2]?.data?.notasFiscais || [],
     formulas: results[3]?.data?.formulas || [],
   };
 }
 
 function buildServerContext(data) {
-  const { clientes, produtos, orcamentos, notasFiscais, formulas } = data;
+  const { clientes, produtos, orcamentos, formulas } = data;
 
   const clientesStr = clientes.map(c =>
     `${c.nome} (${c.tipo}, ${c.status}, doc:${c.documento}, email:${c.email}, tel:${c.telefone})`
@@ -36,10 +35,6 @@ function buildServerContext(data) {
     const cli = clientes.find(c => c.id === o.clienteId)?.nome || '?';
     return `${o.codigo} — ${cli} — ${o.descricao} — R$${o.valor} (${o.status})${o.data ? ' — ' + o.data : ''}`;
   }).join('\n- ') || 'Nenhum';
-
-  const nfsStr = notasFiscais.map(n =>
-    `${n.numero} R$${n.valorTotal} (${n.status})${n.data ? ' — ' + n.data : ''}`
-  ).join('\n- ') || 'Nenhuma';
 
   const formulasStr = formulas.map(f =>
     `${f.nome}: ${f.latex} [vars: ${(f.variaveis || []).join(',')} | constantes: ${(f.constantes || []).map(c => c.nome + '=' + c.valor).join(',')}]`
@@ -66,7 +61,6 @@ RESUMO GERAL:
 - ${clientes.length} clientes (${clientesAtivos} ativos)
 - ${produtos.length} produtos (${produtosBaixoEstoque} com estoque baixo ≤10)
 - ${orcamentos.length} orçamentos (${orcAprovados.length} aprovados)
-- ${notasFiscais.length} notas fiscais
 - ${formulas.length} fórmulas cadastradas
 - Receita total (aprovados): R$ ${receitaTotal.toFixed(2)}
 
@@ -80,9 +74,6 @@ PRODUTOS (${produtos.length}):
 
 ORÇAMENTOS (${orcamentos.length}):
 - ${orcamentosStr}
-
-NOTAS FISCAIS (${notasFiscais.length}):
-- ${nfsStr}
 
 FÓRMULAS (${formulas.length}):
 - ${formulasStr}`;

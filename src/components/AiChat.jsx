@@ -17,7 +17,7 @@ const RESPONSES = {
   'ver resumo': {
     msg: () => {
       const db = getDB();
-      return `📊 <strong>Resumo:</strong><br>• <strong>${db.clientes.length}</strong> clientes<br>• <strong>${db.produtos.length}</strong> produtos<br>• <strong>${db.orcamentos.length}</strong> orçamentos (${db.orcamentos.filter(o => o.status === 'Aprovado').length} aprovados)<br>• <strong>${db.notasFiscais.filter(n => n.status === 'Emitida').length}</strong> NFs emitidas`;
+      return `📊 <strong>Resumo:</strong><br>• <strong>${db.clientes.length}</strong> clientes<br>• <strong>${db.produtos.length}</strong> produtos<br>• <strong>${db.orcamentos.length}</strong> orçamentos (${db.orcamentos.filter(o => o.status === 'Aprovado').length} aprovados)`;
     },
     chips: ['Cadastrar cliente', 'Criar orçamento'],
   },

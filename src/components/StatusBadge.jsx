@@ -6,7 +6,7 @@ const MAP = {
   'Rascunho': 'b-rascunho', 'Aprovado': 'b-aprovado',
   'Rejeitado': 'b-rejeitado', 'Expirado': 'b-expirado',
   'Pago': 'b-pago', 'Pendente': 'b-pendente', 'Atrasado': 'b-atrasado',
-  'Emitida': 'b-emitida', 'Ativo': 'b-ativo', 'Inativo': 'b-inativo',
+  'Ativo': 'b-ativo', 'Inativo': 'b-inativo',
   'Em Processamento': 'b-processando',
 };
 
