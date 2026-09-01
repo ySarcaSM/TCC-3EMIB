@@ -5,6 +5,91 @@ const { encrypt, decrypt } = require('../utils/crypto');
 
 const router = express.Router();
 
+/* ─── Helpers: buscar dados do MongoDB ─── */
+async function fetchUserData(username) {
+  const db = getDb();
+  const sections = ['clients/info', 'products/info', 'budgets/info', 'formulas/info'];
+  const results = await Promise.all(
+    sections.map(s => db.collection('user_data').findOne({ username, section: s }))
+  );
+  return {
+    clientes: results[0]?.data?.clientes || [],
+    produtos: results[1]?.data?.produtos || [],
+    orcamentos: results[2]?.data?.orcamentos || [],
+    notasFiscais: results[2]?.data?.notasFiscais || [],
+    formulas: results[3]?.data?.formulas || [],
+  };
+}
+
+function buildServerContext(data) {
+  const { clientes, produtos, orcamentos, notasFiscais, formulas } = data;
+
+  const clientesStr = clientes.map(c =>
+    `${c.nome} (${c.tipo}, ${c.status}, doc:${c.documento}, email:${c.email}, tel:${c.telefone})`
+  ).join('\n- ') || 'Nenhum';
+
+  const produtosStr = produtos.map(p =>
+    `${p.nome} [${p.categoria}] R$${p.valor} estoque:${p.estoque} (${p.status})${p.descricao ? ' — ' + p.descricao : ''}`
+  ).join('\n- ') || 'Nenhum';
+
+  const orcamentosStr = orcamentos.map(o => {
+    const cli = clientes.find(c => c.id === o.clienteId)?.nome || '?';
+    return `${o.codigo} — ${cli} — ${o.descricao} — R$${o.valor} (${o.status})${o.data ? ' — ' + o.data : ''}`;
+  }).join('\n- ') || 'Nenhum';
+
+  const nfsStr = notasFiscais.map(n =>
+    `${n.numero} R$${n.valorTotal} (${n.status})${n.data ? ' — ' + n.data : ''}`
+  ).join('\n- ') || 'Nenhuma';
+
+  const formulasStr = formulas.map(f =>
+    `${f.nome}: ${f.latex} [vars: ${(f.variaveis || []).join(',')} | constantes: ${(f.constantes || []).map(c => c.nome + '=' + c.valor).join(',')}]`
+  ).join('\n- ') || 'Nenhuma';
+
+  // Estatísticas úteis
+  const orcAprovados = orcamentos.filter(o => o.status === 'Aprovado');
+  const receitaTotal = orcAprovados.reduce((a, o) => a + (o.valor || 0), 0);
+  const clientesAtivos = clientes.filter(c => c.status === 'Ativo').length;
+  const produtosBaixoEstoque = produtos.filter(p => p.estoque <= 10).length;
+
+  return `Você é a IA assistente do sistema Angler de gestão empresarial.
+
+REGRAS:
+- Responda SEMPRE em português brasileiro
+- Use markdown: **negrito**, listas com -, código com backticks
+- Seja direto, útil e profissional
+- Quando listar dados, use tabelas ou listas organizadas
+- Se a pergunta for sobre dados que não existem, informe claramente
+- Nunca invente dados que não estão no contexto abaixo
+- Se o usuário pedir para criar/editar/excluir algo, oriente-o a usar a tela correspondente no sistema
+
+RESUMO GERAL:
+- ${clientes.length} clientes (${clientesAtivos} ativos)
+- ${produtos.length} produtos (${produtosBaixoEstoque} com estoque baixo ≤10)
+- ${orcamentos.length} orçamentos (${orcAprovados.length} aprovados)
+- ${notasFiscais.length} notas fiscais
+- ${formulas.length} fórmulas cadastradas
+- Receita total (aprovados): R$ ${receitaTotal.toFixed(2)}
+
+--- DADOS COMPLETOS DO SISTEMA ---
+
+CLIENTES (${clientes.length}):
+- ${clientesStr}
+
+PRODUTOS (${produtos.length}):
+- ${produtosStr}
+
+ORÇAMENTOS (${orcamentos.length}):
+- ${orcamentosStr}
+
+NOTAS FISCAIS (${notasFiscais.length}):
+- ${nfsStr}
+
+FÓRMULAS (${formulas.length}):
+- ${formulasStr}`;
+}
+
+/* ─── Rotas ─── */
+
 // Salvar chave API (criptografada)
 router.put('/config', auth, async (req, res) => {
   try {
@@ -26,7 +111,7 @@ router.put('/config', auth, async (req, res) => {
   }
 });
 
-// Ler config (retorna chave descriptografada para uso do frontend)
+// Ler config
 router.get('/config', auth, async (req, res) => {
   try {
     const db = getDb();
@@ -42,7 +127,7 @@ router.get('/config', auth, async (req, res) => {
   }
 });
 
-// Chat — proxy para Gemini (chave nunca sai do servidor)
+// Chat — busca dados do MongoDB e injeta no contexto
 router.post('/chat', auth, async (req, res) => {
   try {
     const { messages, model } = req.body;
@@ -55,15 +140,23 @@ router.post('/chat', auth, async (req, res) => {
 
     const useModel = model || config?.data?.model || 'gemini-2.0-flash';
 
-    // Chamar Gemini
-    const systemMsg = messages.find(m => m.role === 'system');
+    // ═══ BUSCAR DADOS FRESCOS DO MONGODB ═══
+    const userData = await fetchUserData(req.username);
+    const serverContext = buildServerContext(userData);
+
+    // Montar mensagens para o Gemini
+    // O system message do frontend é substituído pelo serverContext (mais completo e fresco)
     const contents = messages.filter(m => m.role !== 'system').map(m => ({
       role: m.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: m.content }],
     }));
-    const body = { contents };
-    if (systemMsg) body.systemInstruction = { parts: [{ text: systemMsg.content }] };
 
+    const body = {
+      contents,
+      systemInstruction: { parts: [{ text: serverContext }] },
+    };
+
+    // Chamar Gemini
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${useModel}:generateContent?key=${apiKey}`;
     const resp = await fetch(url, {
       method: 'POST',
@@ -75,7 +168,6 @@ router.post('/chat', auth, async (req, res) => {
       const err = await resp.json().catch(() => ({}));
       const errMsg = err.error?.message || `Erro ${resp.status}`;
 
-      // Friendly errors
       if (errMsg.includes('quota') || errMsg.includes('429')) {
         return res.status(429).json({ error: 'Limite de uso atingido. Aguarde 1 minuto e tente de novo.' });
       }

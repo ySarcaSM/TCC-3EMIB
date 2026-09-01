@@ -81,11 +81,26 @@ export async function testKey(apiKey) {
   }
 }
 
-// Chat — prioriza server, fallback direto (sem duplicar)
+// Chat — prioriza server (que busca dados do MongoDB), fallback direto
 export async function callGemini(messages, model) {
   const key = localStorage.getItem('angler_gemini_key');
   if (!key) throw new Error('Configure a chave do Gemini nas Configurações.');
 
+  const useModel = model || 'gemini-2.0-flash';
+
+  // Tenta server proxy primeiro (server busca dados frescos do MongoDB)
+  const online = await checkServer();
+  if (online) {
+    try {
+      // Server ignora o system message do frontend e constrói o próprio com dados do MongoDB
+      const reply = await api.chat(messages, useModel);
+      return reply.reply || '';
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  // Fallback offline: usar contexto local (localStorage)
   const systemMsg = messages.find(m => m.role === 'system');
   const contents = messages.filter(m => m.role !== 'system').map(m => ({
     role: m.role === 'assistant' ? 'model' : 'user',
@@ -94,21 +109,7 @@ export async function callGemini(messages, model) {
   const body = { contents };
   if (systemMsg) body.systemInstruction = { parts: [{ text: systemMsg.content }] };
 
-  const useModel = model || 'gemini-2.0-flash';
-
-  // Tenta server proxy primeiro
-  const online = await checkServer();
-  if (online) {
-    try {
-      const reply = await api.chat(messages, useModel);
-      return reply.reply || '';
-    } catch (err) {
-      // Se o server respondeu, NÃO tenta direto (evita gastar 2x)
-      throw err;
-    }
-  }
-
-  // Fallback: chamar direto só quando server offline
+  // Chamar direto só quando server offline
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${useModel}:generateContent?key=${key}`;
   const resp = await fetch(url, {
     method: 'POST',

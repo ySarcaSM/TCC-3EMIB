@@ -24,7 +24,7 @@ const SUGGESTIONS = [
   'Sugira uma estratégia de vendas',
 ];
 
-/* ─── Context builder ─── */
+/* ─── Context builder (fallback offline — quando server está online, o server busca do MongoDB) ─── */
 function buildContext() {
   const db = getDB();
   const formulas = getAllFormulas();
