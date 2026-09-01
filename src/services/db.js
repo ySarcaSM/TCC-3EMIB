@@ -4,7 +4,6 @@ let db = {
   clientes: [],
   produtos: [],
   orcamentos: [],
-  notasFiscais: [],
 };
 
 let serverAvailable = false;
@@ -43,7 +42,7 @@ export async function loadDB() {
       if (clients?.clientes) db.clientes = clients.clientes;
       if (products?.produtos) db.produtos = products.produtos;
       if (budgets?.orcamentos) db.orcamentos = budgets.orcamentos;
-      if (budgets?.notasFiscais) db.notasFiscais = budgets.notasFiscais;
+
       localStorage.setItem('anglerDB', JSON.stringify(db));
     } catch {}
   }
@@ -58,7 +57,7 @@ export function saveDB() {
     Promise.all([
       api.saveData('clients/info', { clientes: db.clientes }),
       api.saveData('products/info', { produtos: db.produtos }),
-      api.saveData('budgets/info', { orcamentos: db.orcamentos, notasFiscais: db.notasFiscais }),
+      api.saveData('budgets/info', { orcamentos: db.orcamentos }),
     ]).catch(() => {});
   }
 }

@@ -73,7 +73,6 @@ export default function Orcamentos() {
   const [form, setForm] = useState({});
   const [confirmDel, setConfirmDel] = useState(null);
   const [confirmApprove, setConfirmApprove] = useState(null);
-  const [confirmNF, setConfirmNF] = useState(null);
   const [toast, setToast] = useState('');
   const [search, setSearch] = useState('');
 
@@ -155,24 +154,6 @@ export default function Orcamentos() {
   const del = (id) => { getDB().orcamentos = getDB().orcamentos.filter(o => o.id !== id); saveDB(); refresh(); setConfirmDel(null); };
   const approve = (id) => { const o = getDB().orcamentos.find(x => x.id === id); o.status = 'Aprovado'; o.dataAprovacao = new Date().toISOString().slice(0, 10); saveDB(); refresh(); setConfirmApprove(null); };
 
-  const gerarNF = (orcId) => {
-    const o = getDB().orcamentos.find(x => x.id === orcId);
-    if (!o || o.status !== 'Aprovado') return;
-    const existing = getDB().notasFiscais.find(n => n.orcamentoId === orcId && n.status === 'Emitida');
-    if (existing) return;
-    getDB().notasFiscais.push({
-      id: uid(),
-      numero: 'NF-' + String(getDB().notasFiscais.length + 1).padStart(3, '0'),
-      data: new Date().toISOString().slice(0, 10),
-      orcamentoId: o.id,
-      clienteId: o.clienteId,
-      itens: [{ desc: o.descricao, qtd: 1, valor: o.valor }],
-      valorTotal: o.valor,
-      status: 'Emitida',
-    });
-    saveDB(); refresh(); setConfirmNF(null);
-  };
-
   const viewO = modal?.mode === 'view' ? db.orcamentos.find(o => o.id === modal.id) : null;
   const viewFormula = viewO?.formulaId ? allFormulas.find(f => f.id === viewO.formulaId) : null;
   const viewParts = viewFormula ? getFormulaParts(viewFormula) : { inputVars: [], resultVar: null };
@@ -208,8 +189,7 @@ export default function Orcamentos() {
               <td className="actions-cell">
                 <button className="btn-icon" onClick={() => openView(o.id)}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
                 {o.status !== 'Aprovado' && <button className="btn-icon" onClick={() => openEdit(o.id)}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>}
-                {o.status === 'Aprovado' && <button className="btn-icon" style={{ color: 'var(--green)' }} onClick={() => setConfirmNF(o.id)}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M9 13l2 2 4-4"/></svg></button>}
-                <button className="btn-icon" onClick={() => setConfirmDel(o.id)}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+                <button className="btn-icon" onClick={() => setConfirmDel(o.id)><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
               </td>
             </tr>
           ))}</tbody>
@@ -426,11 +406,7 @@ export default function Orcamentos() {
                 <button className="btn btn-success" onClick={() => setConfirmApprove(viewO?.id)}>✓ Aprovar</button>
               </div>
             )}
-            {viewO?.status === 'Aprovado' && (
-              <div style={{ marginTop: 16, display: 'flex', justifyContent: 'flex-end' }}>
-                <button className="btn btn-success" onClick={() => setConfirmNF(viewO?.id)}>Gerar NF</button>
-              </div>
-            )}
+
           </div>
         </IonContent>
       </IonModal>
@@ -438,7 +414,6 @@ export default function Orcamentos() {
       {/* Alerts */}
       <IonAlert isOpen={!!confirmDel} onDidDismiss={() => setConfirmDel(null)} header="Excluir" message="Excluir este orçamento?" buttons={[{ text: 'Cancelar', role: 'cancel' }, { text: 'Excluir', role: 'destructive', handler: () => del(confirmDel) }]} />
       <IonAlert isOpen={!!confirmApprove} onDidDismiss={() => setConfirmApprove(null)} header="Aprovar" message="Aprovar este orçamento?" buttons={[{ text: 'Cancelar', role: 'cancel' }, { text: 'Aprovar', handler: () => approve(confirmApprove) }]} />
-      <IonAlert isOpen={!!confirmNF} onDidDismiss={() => setConfirmNF(null)} header="Gerar NF" message="Gerar nota fiscal?" buttons={[{ text: 'Cancelar', role: 'cancel' }, { text: 'Gerar', handler: () => gerarNF(confirmNF) }]} />
 
       <IonToast isOpen={!!toast} onDidDismiss={() => setToast('')} message={toast} duration={2000} color={toast.includes('Erro') || toast.includes('Preencha') ? 'danger' : 'success'} position="bottom" />
     </div>

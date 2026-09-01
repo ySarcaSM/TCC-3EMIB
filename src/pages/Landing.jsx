@@ -66,7 +66,7 @@ const STEPS = [
 const PROBLEMS = [
   { before: 'Orçamentos levam dias', after: 'Propostas em segundos com IA' },
   { before: 'Papelada no chão de fábrica', after: '100% digital e organizado' },
-  { before: 'NF manual e atrasada', after: 'Emissão automática e rastreável' },
+
   { before: 'Dados espalhados', after: 'Dashboard centralizado em tempo real' },
 ];
 

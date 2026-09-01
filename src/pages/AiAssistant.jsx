@@ -34,17 +34,15 @@ function buildContext() {
     const cli = db.clientes.find(c => c.id === o.clienteId)?.nome || '?';
     return `${o.codigo} - ${cli} - ${o.descricao} - R$$$${o.valor} (${o.status})`;
   }).join('; ') || 'Nenhum';
-  const nfs = db.notasFiscais.map(n => `${n.numero} R$${n.valorTotal} (${n.status})`).join('; ') || 'Nenhuma';
   const formulaInfo = formulas.map(f => `${f.nome}: ${f.latex} [vars: ${(f.variaveis || []).join(',')}]`).join('; ') || 'Nenhuma';
 
   return `Você é a IA assistente do sistema Angler de gestão empresarial. Responda em português brasileiro. Use markdown (negrito com **, listas com -). Seja direto e útil.
 
 DADOS DO SISTEMA:
-- Total: ${db.clientes.length} clientes, ${db.produtos.length} produtos, ${db.orcamentos.length} orçamentos, ${db.notasFiscais.length} NFs, ${formulas.length} fórmulas
+- Total: ${db.clientes.length} clientes, ${db.produtos.length} produtos, ${db.orcamentos.length} orçamentos, ${formulas.length} fórmulas
 - Clientes: ${clientes}
 - Produtos: ${produtos}
 - Orçamentos: ${orcamentos}
-- NFs: ${nfs}
 - Fórmulas: ${formulaInfo}`;
 }
 
@@ -119,10 +117,7 @@ function localResponse(pergunta) {
     return `**Produtos (${db.produtos.length}):**\n\n${db.produtos.map(p => `- **${p.nome}** R$ ${p.valor} — Estoque: ${p.estoque}`).join('\n')}`;
   }
 
-  if (lower.includes('nf') || lower.includes('nota')) {
-    const e = db.notasFiscais.filter(n => n.status === 'Emitida');
-    return `**NFs:** ${e.length} emitidas, R$ ${e.reduce((a, n) => a + n.valorTotal, 0).toFixed(2)}`;
-  }
+
 
   return null;
 }
