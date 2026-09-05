@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useHistory } from 'react-router-dom';
 import { IonIcon } from '@ionic/react';
 import {
   logInOutline, personAddOutline, arrowForwardOutline,
@@ -71,7 +72,8 @@ const PROBLEMS = [
 ];
 
 /* ─── Componente ─── */
-export default function Landing({ onLogin, onRegister }) {
+export default function Landing() {
+  const history = useHistory();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -103,10 +105,10 @@ export default function Landing({ onLogin, onRegister }) {
             <button onClick={() => scrollTo('about')}>Sobre</button>
           </div>
           <div className="lp-nav-actions">
-            <button className="btn btn-ghost btn-sm" onClick={onLogin}>
+            <button className="btn btn-ghost btn-sm" onClick={() => history.push('/login')}>
               <IonIcon icon={logInOutline} style={{ fontSize: 15 }} /> Entrar
             </button>
-            <button className="btn btn-primary btn-sm" onClick={onRegister}>
+            <button className="btn btn-primary btn-sm" onClick={() => history.push('/cadastro')}>
               Começar Grátis
             </button>
           </div>
@@ -138,11 +140,11 @@ export default function Landing({ onLogin, onRegister }) {
             para gerar propostas comerciais em segundos.
           </p>
           <div className="lp-hero-cta">
-            <button className="btn btn-primary btn-lg" onClick={onRegister}>
+            <button className="btn btn-primary btn-lg" onClick={() => history.push('/cadastro')}>
               Criar Conta Gratuita
               <IonIcon icon={arrowForwardOutline} style={{ fontSize: 18 }} />
             </button>
-            <button className="btn btn-ghost btn-lg" onClick={onLogin}>
+            <button className="btn btn-ghost btn-lg" onClick={() => history.push('/login')}>
               <IonIcon icon={logInOutline} style={{ fontSize: 18 }} /> Já tenho conta
             </button>
           </div>
@@ -338,11 +340,11 @@ export default function Landing({ onLogin, onRegister }) {
             <h2>Pronto para transformar<br />sua <span className="lp-highlight">gestão empresarial</span>?</h2>
             <p>Comece gratuitamente. Sem cartão de crédito.</p>
             <div className="lp-cta-buttons">
-              <button className="btn btn-primary btn-lg" onClick={onRegister}>
+              <button className="btn btn-primary btn-lg" onClick={() => history.push('/cadastro')}>
                 Criar Conta Gratuita
                 <IonIcon icon={arrowForwardOutline} style={{ fontSize: 18 }} />
               </button>
-              <button className="btn btn-ghost btn-lg" onClick={onLogin}>
+              <button className="btn btn-ghost btn-lg" onClick={() => history.push('/login')}>
                 <IonIcon icon={logInOutline} style={{ fontSize: 18 }} /> Já tenho conta
               </button>
             </div>

@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { connectDB } = require('./config/db');
+const { seedAdmin } = require('./routes/auth');
 
 const app = express();
 app.use(cors());
@@ -17,7 +18,10 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
 // Iniciar
 const PORT = process.env.PORT || 3001;
-connectDB().then(() => {
+connectDB().then(async () => {
+  // Seed admin user
+  await seedAdmin();
+
   app.listen(PORT, () => console.log(`Servidor rodando em http://localhost:${PORT}`));
 }).catch(err => {
   console.error('Erro ao conectar MongoDB:', err.message);

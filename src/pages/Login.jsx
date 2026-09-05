@@ -1,24 +1,28 @@
 import React, { useState } from 'react';
+import { useHistory } from 'react-router-dom';
 import { IonIcon, IonToast } from '@ionic/react';
-import { logInOutline, personAddOutline } from 'ionicons/icons';
+import { logInOutline, personAddOutline, arrowBackOutline } from 'ionicons/icons';
 import { api } from '../services/api';
 
-export default function Login({ onLogin, initialMode }) {
-  const [mode, setMode] = useState(initialMode || 'login');
+export default function Login({ mode, onLogin }) {
+  const history = useHistory();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState('');
   const [toastColor, setToastColor] = useState('danger');
 
+  const isLogin = mode === 'login';
+
   const handleSubmit = async () => {
     if (!username.trim() || !password.trim()) {
       setToast('Preencha usuário e senha.');
+      setToastColor('danger');
       return;
     }
     setLoading(true);
     try {
-      const data = mode === 'login'
+      const data = isLogin
         ? await api.login(username.trim(), password)
         : await api.register(username.trim(), password);
 
@@ -35,11 +39,22 @@ export default function Login({ onLogin, initialMode }) {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'var(--card)', padding: 24,
+      minHeight: '100vh', background: 'var(--bg)', padding: 24,
     }}>
-      <div style={{
-        width: '100%', maxWidth: 380,
-      }}>
+      <div style={{ width: '100%', maxWidth: 380 }}>
+        {/* Botão voltar */}
+        <button
+          onClick={() => history.push('/')}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            background: 'none', border: 'none', color: 'var(--muted)',
+            cursor: 'pointer', fontSize: 13, marginBottom: 24,
+          }}
+        >
+          <IonIcon icon={arrowBackOutline} style={{ fontSize: 16 }} />
+          Voltar
+        </button>
+
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{
@@ -50,7 +65,7 @@ export default function Login({ onLogin, initialMode }) {
           }}>A</div>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Angler</h1>
           <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>
-            {mode === 'login' ? 'Entre na sua conta' : 'Crie sua conta'}
+            {isLogin ? 'Entre na sua conta' : 'Crie sua conta'}
           </p>
         </div>
 
@@ -79,7 +94,7 @@ export default function Login({ onLogin, initialMode }) {
               onChange={e => setPassword(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSubmit()}
               placeholder="Sua senha"
-              autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+              autoComplete={isLogin ? 'current-password' : 'new-password'}
               style={{
                 width: '100%', background: 'var(--surface)', border: '1px solid var(--border)',
                 borderRadius: 8, padding: '12px 14px', color: 'var(--text)', fontSize: 14, outline: 'none',
@@ -92,18 +107,21 @@ export default function Login({ onLogin, initialMode }) {
             disabled={loading}
             style={{ width: '100%', padding: '12px 0', marginTop: 4, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
           >
-            <IonIcon icon={mode === 'login' ? logInOutline : personAddOutline} style={{ fontSize: 18 }} />
-            {loading ? 'Aguarde...' : (mode === 'login' ? 'Entrar' : 'Criar Conta')}
+            <IonIcon icon={isLogin ? logInOutline : personAddOutline} style={{ fontSize: 18 }} />
+            {loading ? 'Aguarde...' : (isLogin ? 'Entrar' : 'Criar Conta')}
           </button>
         </div>
 
         {/* Toggle */}
         <div style={{ textAlign: 'center', marginTop: 20 }}>
           <button
-            onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setToast(''); }}
+            onClick={() => {
+              history.push(isLogin ? '/cadastro' : '/login');
+              setToast('');
+            }}
             style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: 13 }}
           >
-            {mode === 'login' ? 'Não tem conta? Criar conta' : 'Já tem conta? Entrar'}
+            {isLogin ? 'Não tem conta? Criar conta' : 'Já tem conta? Entrar'}
           </button>
         </div>
       </div>

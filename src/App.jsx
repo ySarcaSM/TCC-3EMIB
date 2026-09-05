@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Switch, Route, Redirect, useLocation, useHistory } from 'react-router-dom';
-import { IonApp, IonIcon, IonModal, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent } from '@ionic/react';
+import { IonApp, IonIcon } from '@ionic/react';
 import {
   homeOutline, peopleOutline, cubeOutline, documentTextOutline, flaskOutline,
-  logOutOutline, sparklesOutline, closeOutline,
+  logOutOutline, sparklesOutline,
 } from 'ionicons/icons';
 import { loadDB } from './services/db';
 import { loadFormulasFromServer } from './services/formulaService';
@@ -108,7 +108,6 @@ const AppLayout = ({ onLogout, username }) => {
 const App = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [authModal, setAuthModal] = useState(null); // 'login' | 'register' | null
 
   useEffect(() => {
     const token = localStorage.getItem('angler_token');
@@ -130,7 +129,6 @@ const App = () => {
   const handleLogin = async (username) => {
     await Promise.all([loadDB(), loadFormulasFromServer()]);
     setUser(username);
-    setAuthModal(null);
   };
 
   const handleLogout = () => {
@@ -148,43 +146,32 @@ const App = () => {
     );
   }
 
-  if (!user) {
-    return (
-      <IonApp>
-        <Landing
-          onLogin={() => setAuthModal('login')}
-          onRegister={() => setAuthModal('register')}
-        />
-
-        {/* Auth Modal */}
-        <IonModal isOpen={!!authModal} onDidDismiss={() => setAuthModal(null)}>
-          <IonHeader>
-            <IonToolbar>
-              <IonTitle style={{ textAlign: 'center' }}>
-                {authModal === 'login' ? 'Entrar' : 'Criar Conta'}
-              </IonTitle>
-              <IonButtons slot="end">
-                <IonButton onClick={() => setAuthModal(null)}>
-                  <IonIcon icon={closeOutline} />
-                </IonButton>
-              </IonButtons>
-            </IonToolbar>
-          </IonHeader>
-          <IonContent style={{ '--background': 'var(--card)' }}>
-            <Login
-              onLogin={handleLogin}
-              initialMode={authModal === 'register' ? 'register' : 'login'}
-            />
-          </IonContent>
-        </IonModal>
-      </IonApp>
-    );
-  }
-
   return (
     <IonApp>
       <Router>
-        <AppLayout onLogout={handleLogout} username={user} />
+        <Switch>
+          {/* Rotas públicas - login e cadastro */}
+          <Route exact path="/login">
+            {user ? <Redirect to="/dashboard" /> : <Login mode="login" onLogin={handleLogin} />}
+          </Route>
+          <Route exact path="/cadastro">
+            {user ? <Redirect to="/dashboard" /> : <Login mode="register" onLogin={handleLogin} />}
+          </Route>
+
+          {/* Rotas protegidas - precisam estar logado */}
+          {user ? (
+            <Route path="/">
+              <AppLayout onLogout={handleLogout} username={user} />
+            </Route>
+          ) : (
+            <>
+              <Route exact path="/">
+                <Landing />
+              </Route>
+              <Redirect to="/" />
+            </>
+          )}
+        </Switch>
       </Router>
     </IonApp>
   );

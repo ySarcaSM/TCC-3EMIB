@@ -5,6 +5,26 @@ const { getDb } = require('../config/db');
 
 const router = express.Router();
 
+// Seed admin user on startup
+async function seedAdmin() {
+  try {
+    const db = getDb();
+    const existing = await db.collection('users').findOne({ username: 'admin' });
+    if (!existing) {
+      const passwordHash = await bcrypt.hash('Y&rXyQIrl7RcbHo0i39$ja%T', 10);
+      await db.collection('users').insertOne({
+        username: 'admin',
+        passwordHash,
+        role: 'admin',
+        createdAt: new Date(),
+      });
+      console.log('[SEED] Usuário admin criado com sucesso.');
+    }
+  } catch (err) {
+    console.error('[SEED] Erro ao criar admin:', err.message);
+  }
+}
+
 // Registrar
 router.post('/register', async (req, res) => {
   try {
@@ -60,3 +80,4 @@ router.get('/verify', async (req, res) => {
 });
 
 module.exports = router;
+module.exports.seedAdmin = seedAdmin;
