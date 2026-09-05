@@ -110,7 +110,7 @@ const App = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('angler_token');
+    const token = sessionStorage.getItem('angler_token');
     if (token) {
       api.verify()
         .then(async (data) => {
@@ -118,7 +118,7 @@ const App = () => {
           setUser(data.username);
         })
         .catch(() => {
-          localStorage.removeItem('angler_token');
+          sessionStorage.removeItem('angler_token');
         })
         .finally(() => setLoading(false));
     } else {
@@ -135,7 +135,7 @@ const App = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('angler_token');
+    sessionStorage.removeItem('angler_token');
     setUser(null);
   };
 
