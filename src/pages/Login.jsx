@@ -1,165 +1,216 @@
 import React, { useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { IonIcon, IonToast } from '@ionic/react';
-import { logInOutline, personAddOutline, arrowBackOutline, mailOutline, checkmarkCircleOutline } from 'ionicons/icons';
+import {
+  logInOutline, personAddOutline, arrowBackOutline,
+  mailOutline, checkmarkCircleOutline, keyOutline,
+  personOutline, lockClosedOutline,
+} from 'ionicons/icons';
 import { api } from '../services/api';
 
+// ═══════════════════════════════════════════
+// Estilos reutilizáveis
+// ═══════════════════════════════════════════
+const inputStyle = {
+  width: '100%', background: 'var(--surface)', border: '1px solid var(--border)',
+  borderRadius: 8, padding: '14px 16px', color: 'var(--text)', fontSize: 16, outline: 'none',
+};
+
+const labelStyle = {
+  fontSize: 14, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 6,
+};
+
+const linkBtn = {
+  background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: 14,
+};
+
+// ═══════════════════════════════════════════
+// Componente principal
+// ═══════════════════════════════════════════
 export default function Login({ mode, onLogin }) {
   const history = useHistory();
 
-  // Login state
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  // ── View: 'login' | 'register' | 'forgot' | 'forgot-username'
+  const [view, setView] = useState(mode === 'login' ? 'login' : 'register');
 
-  // Register state
-  const [step, setStep] = useState(1); // 1=dados, 2=código
+  // ── Sub-step para flows multi-step
+  const [step, setStep] = useState(1);
+
+  // ── Login
+  const [loginInput, setLoginInput] = useState(''); // username ou email
+  const [loginPass, setLoginPass] = useState('');
+
+  // ── Cadastro
   const [regName, setRegName] = useState('');
   const [regLastName, setRegLastName] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regUsername, setRegUsername] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regConfirm, setRegConfirm] = useState('');
+
+  // ── Esqueceu senha
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetCode, setResetCode] = useState('');
+  const [resetNewPass, setResetNewPass] = useState('');
+  const [resetConfirmPass, setResetConfirmPass] = useState('');
+
+  // ── Esqueceu usuário
+  const [forgotUserEmail, setForgotUserEmail] = useState('');
+
+  // ── Código genérico
   const [verificationCode, setVerificationCode] = useState('');
 
+  // ── UI
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState('');
   const [toastColor, setToastColor] = useState('danger');
 
-  const isLogin = mode === 'login';
+  const show = (msg, color = 'danger') => { setToast(msg); setToastColor(color); };
 
-  // ─── Login ───
+  // ═══════════════════════════════════════════
+  // LOGIN
+  // ═══════════════════════════════════════════
   const handleLogin = async () => {
-    if (!username.trim() || !password.trim()) {
-      setToast('Preencha usuário e senha.');
-      setToastColor('danger');
+    if (!loginInput.trim() || !loginPass.trim()) {
+      show('Preencha usuário/email e senha.');
       return;
     }
     setLoading(true);
     try {
-      const data = await api.login(username.trim(), password);
+      const data = await api.login(loginInput.trim(), loginPass);
       sessionStorage.setItem('angler_token', data.token);
       setToast('');
       onLogin(data.username);
     } catch (err) {
-      setToast(err.message);
-      setToastColor('danger');
+      show(err.message);
     }
     setLoading(false);
   };
 
-  // ─── Cadastro Step 1: enviar código ───
+  // ═══════════════════════════════════════════
+  // CADASTRO — Step 1: enviar código
+  // ═══════════════════════════════════════════
   const handleSendCode = async () => {
     if (!regName.trim() || !regLastName.trim() || !regEmail.trim() || !regUsername.trim() || !regPassword) {
-      setToast('Preencha todos os campos.');
-      setToastColor('danger');
+      show('Preencha todos os campos.');
       return;
     }
-    if (regPassword.length < 6) {
-      setToast('Senha precisa ter pelo menos 6 caracteres.');
-      setToastColor('danger');
-      return;
-    }
-    if (regPassword !== regConfirm) {
-      setToast('As senhas não conferem.');
-      setToastColor('danger');
-      return;
-    }
+    if (regPassword.length < 6) { show('Senha precisa ter pelo menos 6 caracteres.'); return; }
+    if (regPassword !== regConfirm) { show('As senhas não conferem.'); return; }
     setLoading(true);
     try {
-      await api.sendCode({
-        name: regName.trim(),
-        lastName: regLastName.trim(),
-        email: regEmail.trim(),
-        username: regUsername.trim(),
-        password: regPassword,
-      });
-      setToast('Código enviado para seu email!');
-      setToastColor('success');
+      await api.sendCode({ name: regName.trim(), lastName: regLastName.trim(), email: regEmail.trim(), username: regUsername.trim(), password: regPassword });
+      show('Código enviado para seu email!', 'success');
       setStep(2);
-    } catch (err) {
-      setToast(err.message);
-      setToastColor('danger');
-    }
+    } catch (err) { show(err.message); }
     setLoading(false);
   };
 
-  // ─── Cadastro Step 2: verificar código ───
+  // ── Cadastro — Step 2: verificar código
   const handleVerifyCode = async () => {
-    if (!verificationCode.trim()) {
-      setToast('Digite o código de verificação.');
-      setToastColor('danger');
-      return;
-    }
+    if (!verificationCode.trim()) { show('Digite o código de verificação.'); return; }
     setLoading(true);
     try {
       const data = await api.verifyCode(regEmail.trim(), verificationCode.trim());
       sessionStorage.setItem('angler_token', data.token);
       setToast('');
       onLogin(data.username);
-    } catch (err) {
-      setToast(err.message);
-      setToastColor('danger');
-    }
+    } catch (err) { show(err.message); }
     setLoading(false);
   };
 
-  // ─── Reenviar código ───
+  // ── Cadastro — reenviar código
   const handleResendCode = async () => {
     setLoading(true);
     try {
-      await api.sendCode({
-        name: regName.trim(),
-        lastName: regLastName.trim(),
-        email: regEmail.trim(),
-        username: regUsername.trim(),
-        password: regPassword,
-      });
-      setToast('Novo código enviado!');
-      setToastColor('success');
-    } catch (err) {
-      setToast(err.message);
-      setToastColor('danger');
-    }
+      await api.sendCode({ name: regName.trim(), lastName: regLastName.trim(), email: regEmail.trim(), username: regUsername.trim(), password: regPassword });
+      show('Novo código enviado!', 'success');
+    } catch (err) { show(err.message); }
     setLoading(false);
   };
 
-  const inputStyle = {
-    width: '100%', background: 'var(--surface)', border: '1px solid var(--border)',
-    borderRadius: 8, padding: '14px 16px', color: 'var(--text)', fontSize: 16, outline: 'none',
+  // ═══════════════════════════════════════════
+  // ESQUECEU SENHA — Step 1: enviar código
+  // ═══════════════════════════════════════════
+  const handleForgotPassword = async () => {
+    if (!resetEmail.trim()) { show('Informe seu email.'); return; }
+    setLoading(true);
+    try {
+      await api.forgotPassword(resetEmail.trim());
+      show('Se o email estiver cadastrado, você receberá um código.', 'success');
+      setStep(2);
+    } catch (err) { show(err.message); }
+    setLoading(false);
   };
 
-  const labelStyle = {
-    fontSize: 14, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 6,
+  // ── Esqueceu senha — Step 2: redefinir
+  const handleResetPassword = async () => {
+    if (!resetCode.trim()) { show('Digite o código.'); return; }
+    if (resetNewPass.length < 6) { show('Nova senha precisa ter pelo menos 6 caracteres.'); return; }
+    if (resetNewPass !== resetConfirmPass) { show('As senhas não conferem.'); return; }
+    setLoading(true);
+    try {
+      const data = await api.resetPassword(resetEmail.trim(), resetCode.trim(), resetNewPass);
+      sessionStorage.setItem('angler_token', data.token);
+      show('Senha redefinida com sucesso!', 'success');
+      setTimeout(() => onLogin(data.username), 1000);
+    } catch (err) { show(err.message); }
+    setLoading(false);
   };
 
+  // ═══════════════════════════════════════════
+  // ESQUECEU USUÁRIO
+  // ═══════════════════════════════════════════
+  const handleForgotUsername = async () => {
+    if (!forgotUserEmail.trim()) { show('Informe seu email.'); return; }
+    setLoading(true);
+    try {
+      await api.forgotUsername(forgotUserEmail.trim());
+      show('Se o email estiver cadastrado, você receberá seu nome de usuário.', 'success');
+      setStep(2);
+    } catch (err) { show(err.message); }
+    setLoading(false);
+  };
+
+  // ═══════════════════════════════════════════
+  // Navegação entre views
+  // ═══════════════════════════════════════════
+  const goTo = (v) => {
+    setView(v);
+    setStep(1);
+    setToast('');
+    setVerificationCode('');
+    setResetCode('');
+    setResetNewPass('');
+    setResetConfirmPass('');
+  };
+
+  const handleBack = () => {
+    if (step > 1) { setStep(1); setToast(''); return; }
+    if (view !== 'login') { goTo('login'); return; }
+    history.push('/');
+  };
+
+  // ═══════════════════════════════════════════
+  // RENDER
+  // ═══════════════════════════════════════════
   return (
     <div style={{
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       minHeight: '100vh', background: 'var(--bg)', padding: 24,
     }}>
       <div style={{ width: '100%', maxWidth: 420 }}>
-        {/* Botão voltar */}
-        <button
-          onClick={() => {
-            if (!isLogin && step === 2) {
-              setStep(1);
-              setVerificationCode('');
-              setToast('');
-            } else {
-              history.push('/');
-            }
-          }}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            background: 'none', border: 'none', color: 'var(--muted)',
-            cursor: 'pointer', fontSize: 15, marginBottom: 24,
-          }}
-        >
+
+        {/* ── Botão voltar ── */}
+        <button onClick={handleBack} style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 15, marginBottom: 24,
+        }}>
           <IonIcon icon={arrowBackOutline} style={{ fontSize: 18 }} />
-          {!isLogin && step === 2 ? 'Voltar' : 'Voltar'}
+          {step > 1 ? 'Voltar' : view === 'login' ? 'Voltar' : 'Voltar'}
         </button>
 
-        {/* Logo */}
+        {/* ── Logo ── */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{
             width: 56, height: 56, borderRadius: 14, margin: '0 auto 12px',
@@ -169,22 +220,27 @@ export default function Login({ mode, onLogin }) {
           }}>A</div>
           <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Angler</h1>
           <p style={{ fontSize: 15, color: 'var(--muted)', marginTop: 4 }}>
-            {isLogin ? 'Entre na sua conta' : step === 1 ? 'Crie sua conta' : 'Verifique seu email'}
+            {view === 'login' && 'Entre na sua conta'}
+            {view === 'register' && (step === 1 ? 'Crie sua conta' : 'Verifique seu email')}
+            {view === 'forgot' && (step === 1 ? 'Recuperar senha' : 'Redefinir senha')}
+            {view === 'forgot-username' && (step === 1 ? 'Recuperar usuário' : 'Email enviado')}
           </p>
         </div>
 
-        {/* ════════════ LOGIN ════════════ */}
-        {isLogin && (
+        {/* ════════════════════════════════════════ */}
+        {/* LOGIN                                    */}
+        {/* ════════════════════════════════════════ */}
+        {view === 'login' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
-              <label style={labelStyle}>Usuário</label>
-              <input type="text" value={username} onChange={e => setUsername(e.target.value)}
+              <label style={labelStyle}>Usuário ou Email</label>
+              <input type="text" value={loginInput} onChange={e => setLoginInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleLogin()}
-                placeholder="Seu usuário" autoComplete="username" style={inputStyle} />
+                placeholder="Seu usuário ou email" autoComplete="username" style={inputStyle} />
             </div>
             <div>
               <label style={labelStyle}>Senha</label>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)}
+              <input type="password" value={loginPass} onChange={e => setLoginPass(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleLogin()}
                 placeholder="Sua senha" autoComplete="current-password" style={inputStyle} />
             </div>
@@ -193,11 +249,29 @@ export default function Login({ mode, onLogin }) {
               <IonIcon icon={logInOutline} style={{ fontSize: 20 }} />
               {loading ? 'Aguarde...' : 'Entrar'}
             </button>
+
+            {/* Links */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+              <button onClick={() => goTo('forgot')} style={linkBtn}>
+                <IonIcon icon={keyOutline} style={{ fontSize: 14, verticalAlign: -2 }} /> Esqueceu a senha?
+              </button>
+              <button onClick={() => goTo('forgot-username')} style={linkBtn}>
+                <IonIcon icon={personOutline} style={{ fontSize: 14, verticalAlign: -2 }} /> Esqueceu o usuário?
+              </button>
+            </div>
+
+            <div style={{ textAlign: 'center', marginTop: 12, borderTop: '1px solid var(--border)', paddingTop: 20 }}>
+              <button onClick={() => goTo('register')} style={{ ...linkBtn, fontSize: 15 }}>
+                Não tem conta? <strong>Criar conta</strong>
+              </button>
+            </div>
           </div>
         )}
 
-        {/* ════════════ CADASTRO STEP 1 — Dados ════════════ */}
-        {!isLogin && step === 1 && (
+        {/* ════════════════════════════════════════ */}
+        {/* CADASTRO — Step 1: Dados                 */}
+        {/* ════════════════════════════════════════ */}
+        {view === 'register' && step === 1 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div>
@@ -237,23 +311,27 @@ export default function Login({ mode, onLogin }) {
               <IonIcon icon={personAddOutline} style={{ fontSize: 20 }} />
               {loading ? 'Aguarde...' : 'Criar Conta'}
             </button>
+            <div style={{ textAlign: 'center', marginTop: 8 }}>
+              <button onClick={() => goTo('login')} style={{ ...linkBtn, fontSize: 15 }}>
+                Já tem conta? <strong>Entrar</strong>
+              </button>
+            </div>
           </div>
         )}
 
-        {/* ════════════ CADASTRO STEP 2 — Código ════════════ */}
-        {!isLogin && step === 2 && (
+        {/* ════════════════════════════════════════ */}
+        {/* CADASTRO — Step 2: Código                 */}
+        {/* ════════════════════════════════════════ */}
+        {view === 'register' && step === 2 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center' }}>
             <div style={{
-              width: 64, height: 64, borderRadius: '50%',
-              background: 'rgba(14,203,129,.12)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              marginBottom: 8,
+              width: 64, height: 64, borderRadius: '50%', background: 'rgba(14,203,129,.12)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8,
             }}>
               <IonIcon icon={mailOutline} style={{ fontSize: 32, color: 'var(--green)' }} />
             </div>
             <p style={{ fontSize: 15, color: 'var(--muted)', textAlign: 'center', lineHeight: 1.5 }}>
-              Enviamos um código de 6 dígitos para<br />
-              <strong style={{ color: 'var(--text)' }}>{regEmail}</strong>
+              Enviamos um código para<br /><strong style={{ color: 'var(--text)' }}>{regEmail}</strong>
             </p>
             <div style={{ width: '100%' }}>
               <label style={labelStyle}>Código de Verificação</label>
@@ -267,27 +345,128 @@ export default function Login({ mode, onLogin }) {
               <IonIcon icon={checkmarkCircleOutline} style={{ fontSize: 20 }} />
               {loading ? 'Verificando...' : 'Verificar e Entrar'}
             </button>
-            <button onClick={handleResendCode} disabled={loading}
-              style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: 14 }}>
-              Reenviar código
-            </button>
+            <button onClick={handleResendCode} disabled={loading} style={linkBtn}>Reenviar código</button>
           </div>
         )}
 
-        {/* Toggle login/cadastro */}
-        <div style={{ textAlign: 'center', marginTop: 24 }}>
-          <button
-            onClick={() => {
-              history.push(isLogin ? '/cadastro' : '/login');
-              setStep(1);
-              setVerificationCode('');
-              setToast('');
-            }}
-            style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: 15 }}
-          >
-            {isLogin ? 'Não tem conta? Criar conta' : 'Já tem conta? Entrar'}
-          </button>
-        </div>
+        {/* ════════════════════════════════════════ */}
+        {/* ESQUECEU SENHA — Step 1: Email            */}
+        {/* ════════════════════════════════════════ */}
+        {view === 'forgot' && step === 1 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <p style={{ fontSize: 15, color: 'var(--muted)', textAlign: 'center', lineHeight: 1.5 }}>
+              Informe o email cadastrado para receber um código de redefinição de senha.
+            </p>
+            <div>
+              <label style={labelStyle}>Email</label>
+              <input type="email" value={resetEmail} onChange={e => setResetEmail(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleForgotPassword()}
+                placeholder="seu@email.com" autoComplete="email" style={inputStyle} />
+            </div>
+            <button className="btn btn-primary" onClick={handleForgotPassword} disabled={loading}
+              style={{ width: '100%', padding: '14px 0', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <IonIcon icon={mailOutline} style={{ fontSize: 20 }} />
+              {loading ? 'Aguarde...' : 'Enviar Código'}
+            </button>
+            <div style={{ textAlign: 'center', marginTop: 8 }}>
+              <button onClick={() => goTo('login')} style={{ ...linkBtn, fontSize: 15 }}>
+                Lembrou a senha? <strong>Entrar</strong>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ════════════════════════════════════════ */}
+        {/* ESQUECEU SENHA — Step 2: Nova senha       */}
+        {/* ════════════════════════════════════════ */}
+        {view === 'forgot' && step === 2 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{
+              width: 64, height: 64, borderRadius: '50%', background: 'rgba(252,213,53,.12)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px',
+            }}>
+              <IonIcon icon={lockClosedOutline} style={{ fontSize: 32, color: 'var(--primary)' }} />
+            </div>
+            <p style={{ fontSize: 15, color: 'var(--muted)', textAlign: 'center', lineHeight: 1.5 }}>
+              Enviamos um código para<br /><strong style={{ color: 'var(--text)' }}>{resetEmail}</strong>
+            </p>
+            <div>
+              <label style={labelStyle}>Código de Verificação</label>
+              <input type="text" value={resetCode} onChange={e => setResetCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="000000" maxLength={6}
+                style={{ ...inputStyle, textAlign: 'center', fontSize: 24, letterSpacing: 10, fontWeight: 700, fontFamily: "'DM Mono', monospace" }} />
+            </div>
+            <div>
+              <label style={labelStyle}>Nova Senha</label>
+              <input type="password" value={resetNewPass} onChange={e => setResetNewPass(e.target.value)}
+                placeholder="Mínimo 6 caracteres" autoComplete="new-password" style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Confirmar Nova Senha</label>
+              <input type="password" value={resetConfirmPass} onChange={e => setResetConfirmPass(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleResetPassword()}
+                placeholder="Repita a nova senha" autoComplete="new-password" style={inputStyle} />
+            </div>
+            <button className="btn btn-primary" onClick={handleResetPassword} disabled={loading}
+              style={{ width: '100%', padding: '14px 0', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <IonIcon icon={checkmarkCircleOutline} style={{ fontSize: 20 }} />
+              {loading ? 'Redefinindo...' : 'Redefinir Senha'}
+            </button>
+            <div style={{ textAlign: 'center' }}>
+              <button onClick={handleForgotPassword} disabled={loading} style={linkBtn}>Reenviar código</button>
+            </div>
+          </div>
+        )}
+
+        {/* ════════════════════════════════════════ */}
+        {/* ESQUECEU USUÁRIO — Step 1: Email          */}
+        {/* ════════════════════════════════════════ */}
+        {view === 'forgot-username' && step === 1 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <p style={{ fontSize: 15, color: 'var(--muted)', textAlign: 'center', lineHeight: 1.5 }}>
+              Informe o email cadastrado para receber seu nome de usuário.
+            </p>
+            <div>
+              <label style={labelStyle}>Email</label>
+              <input type="email" value={forgotUserEmail} onChange={e => setForgotUserEmail(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleForgotUsername()}
+                placeholder="seu@email.com" autoComplete="email" style={inputStyle} />
+            </div>
+            <button className="btn btn-primary" onClick={handleForgotUsername} disabled={loading}
+              style={{ width: '100%', padding: '14px 0', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <IonIcon icon={mailOutline} style={{ fontSize: 20 }} />
+              {loading ? 'Aguarde...' : 'Enviar Nome de Usuário'}
+            </button>
+            <div style={{ textAlign: 'center', marginTop: 8 }}>
+              <button onClick={() => goTo('login')} style={{ ...linkBtn, fontSize: 15 }}>
+                Lembrou o usuário? <strong>Entrar</strong>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ════════════════════════════════════════ */}
+        {/* ESQUECEU USUÁRIO — Step 2: Sucesso        */}
+        {/* ════════════════════════════════════════ */}
+        {view === 'forgot-username' && step === 2 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center' }}>
+            <div style={{
+              width: 64, height: 64, borderRadius: '50%', background: 'rgba(14,203,129,.12)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8,
+            }}>
+              <IonIcon icon={checkmarkCircleOutline} style={{ fontSize: 32, color: 'var(--green)' }} />
+            </div>
+            <p style={{ fontSize: 15, color: 'var(--muted)', textAlign: 'center', lineHeight: 1.5 }}>
+              Se <strong style={{ color: 'var(--text)' }}>{forgotUserEmail}</strong> estiver cadastrado,
+              você receberá seu nome de usuário por email.
+            </p>
+            <button className="btn btn-primary" onClick={() => goTo('login')}
+              style={{ width: '100%', padding: '14px 0', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <IonIcon icon={logInOutline} style={{ fontSize: 20 }} />
+              Ir para Login
+            </button>
+          </div>
+        )}
       </div>
 
       <IonToast isOpen={!!toast} onDidDismiss={() => setToast('')} message={toast} duration={4000} color={toastColor} position="bottom" />

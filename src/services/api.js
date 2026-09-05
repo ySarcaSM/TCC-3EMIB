@@ -25,11 +25,20 @@ async function request(method, path, body) {
 }
 
 export const api = {
-  // Auth
+  // Auth — Login
   login: (username, password) => request('POST', '/auth/login', { username, password }),
+  verify: () => request('GET', '/auth/verify'),
+
+  // Auth — Cadastro
   sendCode: (data) => request('POST', '/auth/send-code', data),
   verifyCode: (email, code) => request('POST', '/auth/verify-code', { email, code }),
-  verify: () => request('GET', '/auth/verify'),
+
+  // Auth — Esqueceu senha
+  forgotPassword: (email) => request('POST', '/auth/forgot-password', { email }),
+  resetPassword: (email, code, newPassword) => request('POST', '/auth/reset-password', { email, code, newPassword }),
+
+  // Auth — Esqueceu usuário
+  forgotUsername: (email) => request('POST', '/auth/forgot-username', { email }),
 
   // Data
   getData: (section) => request('GET', `/data/${section}`),
