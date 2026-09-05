@@ -24,7 +24,10 @@ export function getDB() {
 }
 
 export async function loadDB() {
-  // Sempre carrega do localStorage primeiro
+  // Resetar para estado vazio
+  db = { clientes: [], produtos: [], orcamentos: [] };
+
+  // Carregar do localStorage
   try {
     const saved = JSON.parse(localStorage.getItem('anglerDB'));
     if (saved) db = { ...db, ...saved };
@@ -39,6 +42,7 @@ export async function loadDB() {
         api.getData('products/info'),
         api.getData('budgets/info'),
       ]);
+      // Só sobrescreve se o server retornou dados
       if (clients?.clientes) db.clientes = clients.clientes;
       if (products?.produtos) db.produtos = products.produtos;
       if (budgets?.orcamentos) db.orcamentos = budgets.orcamentos;

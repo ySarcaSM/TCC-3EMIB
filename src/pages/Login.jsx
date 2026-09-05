@@ -64,7 +64,7 @@ export default function Login({ mode, onLogin }) {
             fontSize: 24, fontWeight: 800, color: 'var(--bg)',
           }}>A</div>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Angler</h1>
-          <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>
+          <p style={{ fontSize: 15, color: 'var(--muted)', marginTop: 4 }}>
             {isLogin ? 'Entre na sua conta' : 'Crie sua conta'}
           </p>
         </div>
@@ -72,7 +72,7 @@ export default function Login({ mode, onLogin }) {
         {/* Form */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 6 }}>Usuário</label>
+            <label style={{ fontSize: 14, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 6 }}>Usuário</label>
             <input
               type="text"
               value={username}
@@ -82,12 +82,12 @@ export default function Login({ mode, onLogin }) {
               autoComplete="username"
               style={{
                 width: '100%', background: 'var(--surface)', border: '1px solid var(--border)',
-                borderRadius: 8, padding: '12px 14px', color: 'var(--text)', fontSize: 14, outline: 'none',
+                borderRadius: 8, padding: '14px 16px', color: 'var(--text)', fontSize: 16, outline: 'none',
               }}
             />
           </div>
           <div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 6 }}>Senha</label>
+            <label style={{ fontSize: 14, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 6 }}>Senha</label>
             <input
               type="password"
               value={password}
@@ -97,7 +97,7 @@ export default function Login({ mode, onLogin }) {
               autoComplete={isLogin ? 'current-password' : 'new-password'}
               style={{
                 width: '100%', background: 'var(--surface)', border: '1px solid var(--border)',
-                borderRadius: 8, padding: '12px 14px', color: 'var(--text)', fontSize: 14, outline: 'none',
+                borderRadius: 8, padding: '14px 16px', color: 'var(--text)', fontSize: 16, outline: 'none',
               }}
             />
           </div>
@@ -105,7 +105,7 @@ export default function Login({ mode, onLogin }) {
             className="btn btn-primary"
             onClick={handleSubmit}
             disabled={loading}
-            style={{ width: '100%', padding: '12px 0', marginTop: 4, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+            style={{ width: '100%', padding: '14px 0', marginTop: 4, fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
           >
             <IonIcon icon={isLogin ? logInOutline : personAddOutline} style={{ fontSize: 18 }} />
             {loading ? 'Aguarde...' : (isLogin ? 'Entrar' : 'Criar Conta')}

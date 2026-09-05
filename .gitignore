@@ -22,8 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-<<<<<<< HEAD
+
+# Environment
 *.env
-=======
-.git-credentials
->>>>>>> 9688dc85765944f361ffd76aab2f25d67bae315c
+.env
+src/server/.env

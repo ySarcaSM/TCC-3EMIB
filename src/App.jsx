@@ -127,6 +127,9 @@ const App = () => {
   }, []);
 
   const handleLogin = async (username) => {
+    // Limpar dados do localStorage de sessão anterior
+    localStorage.removeItem('anglerDB');
+    localStorage.removeItem('angler_formulas');
     await Promise.all([loadDB(), loadFormulasFromServer()]);
     setUser(username);
   };
