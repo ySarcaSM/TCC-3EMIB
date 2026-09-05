@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { IonModal, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonSearchbar, IonAlert, IonToast, IonContent } from '@ionic/react';
 import { closeOutline, addOutline, trashOutline, checkmarkCircleOutline, informationCircleOutline } from 'ionicons/icons';
 import { getAllFormulas, createFormula, updateFormula, deleteFormula } from '../services/formulaService';
+import { HistoryActions } from '../services/historyService';
 import FormulaCard from '../components/FormulaCard';
 import FormulaPreview from '../components/FormulaPreview';
 import FormulaCalculator from '../components/FormulaCalculator';
@@ -61,15 +62,21 @@ export default function Formulas() {
     if (!latex.trim()) { showToast('Escreva a fórmula', 'danger'); return; }
     if (editId) {
       updateFormula(editId, { nome: nome.trim(), latex: latex.trim(), descricao: descricao.trim(), constantes });
+      HistoryActions.formulaUpdated(nome.trim());
       showToast('Fórmula atualizada!');
     } else {
       createFormula({ nome: nome.trim(), latex: latex.trim(), descricao: descricao.trim(), constantes });
+      HistoryActions.formulaCreated(nome.trim());
       showToast('Fórmula criada!');
     }
     refresh(); closeEditor();
   };
 
-  const handleDelete = (id) => { deleteFormula(id); refresh(); setConfirmDel(null); showToast('Fórmula excluída', 'danger'); };
+  const handleDelete = (id) => {
+    const f = getAllFormulas().find(f => f.id === id);
+    HistoryActions.formulaDeleted(f?.nome || 'Desconhecida');
+    deleteFormula(id); refresh(); setConfirmDel(null); showToast('Fórmula excluída', 'danger');
+  };
   const openCalc = (f) => { setCalcFormula(f); setShowCalc(true); };
 
   const detectVars = (lx, consts) => {

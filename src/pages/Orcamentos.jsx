@@ -3,6 +3,7 @@ import { IonModal, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIc
 import { closeOutline, calculatorOutline, informationCircleOutline } from 'ionicons/icons';
 import { getDB, saveDB, uid, fd, fc } from '../services/db';
 import { getAllFormulas } from '../services/formulaService';
+import { HistoryActions } from '../services/historyService';
 import FormulaPreview from '../components/FormulaPreview';
 import StatusBadge from '../components/StatusBadge';
 
@@ -146,13 +147,27 @@ export default function Orcamentos() {
       formulaVars: formulaId ? formulaVars : null,
       valor,
     };
-    if (modal.mode === 'edit') Object.assign(db.orcamentos.find(x => x.id === modal.id), data);
-    else { data.id = uid(); data.data = new Date().toISOString().slice(0, 10); db.orcamentos.push(data); }
+    if (modal.mode === 'edit') {
+      Object.assign(db.orcamentos.find(x => x.id === modal.id), data);
+      HistoryActions.budgetUpdated(data.id || modal.id);
+    } else {
+      data.id = uid(); data.data = new Date().toISOString().slice(0, 10); db.orcamentos.push(data);
+      HistoryActions.budgetCreated(data.id, fc(valor));
+    }
     saveDB(); refresh(); close();
   };
 
-  const del = (id) => { getDB().orcamentos = getDB().orcamentos.filter(o => o.id !== id); saveDB(); refresh(); setConfirmDel(null); };
-  const approve = (id) => { const o = getDB().orcamentos.find(x => x.id === id); o.status = 'Aprovado'; o.dataAprovacao = new Date().toISOString().slice(0, 10); saveDB(); refresh(); setConfirmApprove(null); };
+  const del = (id) => {
+    HistoryActions.budgetDeleted(id);
+    getDB().orcamentos = getDB().orcamentos.filter(o => o.id !== id);
+    saveDB(); refresh(); setConfirmDel(null);
+  };
+  const approve = (id) => {
+    const o = getDB().orcamentos.find(x => x.id === id);
+    o.status = 'Aprovado'; o.dataAprovacao = new Date().toISOString().slice(0, 10);
+    HistoryActions.budgetApproved(id, fc(o.itens?.reduce((s, i) => s + i.qtd * i.valor, 0) || 0));
+    saveDB(); refresh(); setConfirmApprove(null);
+  };
 
   const viewO = modal?.mode === 'view' ? db.orcamentos.find(o => o.id === modal.id) : null;
   const viewFormula = viewO?.formulaId ? allFormulas.find(f => f.id === viewO.formulaId) : null;
