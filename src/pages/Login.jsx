@@ -13,15 +13,15 @@ import { api } from '../services/api';
 // ═══════════════════════════════════════════
 const inputStyle = {
   width: '100%', background: 'var(--surface)', border: '1px solid var(--border)',
-  borderRadius: 8, padding: '14px 16px', color: 'var(--text)', fontSize: 16, outline: 'none',
+  borderRadius: 8, padding: '14px 16px', color: 'var(--text)', fontSize: 21, outline: 'none',
 };
 
 const labelStyle = {
-  fontSize: 14, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 6,
+  fontSize: 19, fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 6,
 };
 
 const linkBtn = {
-  background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: 14,
+  background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: 19,
 };
 
 // ═══════════════════════════════════════════
@@ -204,9 +204,9 @@ export default function Login({ mode, onLogin }) {
         {/* ── Botão voltar ── */}
         <button onClick={handleBack} style={{
           display: 'flex', alignItems: 'center', gap: 6,
-          background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 15, marginBottom: 24,
+          background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 25, marginBottom: 24,
         }}>
-          <IonIcon icon={arrowBackOutline} style={{ fontSize: 18 }} />
+          <IonIcon icon={arrowBackOutline} style={{ fontSize: 23 }} />
           {step > 1 ? 'Voltar' : view === 'login' ? 'Voltar' : 'Voltar'}
         </button>
 
@@ -216,10 +216,10 @@ export default function Login({ mode, onLogin }) {
             width: 56, height: 56, borderRadius: 14, margin: '0 auto 12px',
             background: 'linear-gradient(135deg, var(--primary), #e8a020)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 24, fontWeight: 800, color: 'var(--bg)',
+            fontSize: 29, fontWeight: 800, color: 'var(--bg)',
           }}>A</div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Angler</h1>
-          <p style={{ fontSize: 15, color: 'var(--muted)', marginTop: 4 }}>
+          <h1 style={{ fontSize: 29, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Angler</h1>
+          <p style={{ fontSize: 25, color: 'var(--muted)', marginTop: 4 }}>
             {view === 'login' && 'Entre na sua conta'}
             {view === 'register' && (step === 1 ? 'Crie sua conta' : 'Verifique seu email')}
             {view === 'forgot' && (step === 1 ? 'Recuperar senha' : 'Redefinir senha')}
@@ -245,23 +245,23 @@ export default function Login({ mode, onLogin }) {
                 placeholder="Sua senha" autoComplete="current-password" style={inputStyle} />
             </div>
             <button className="btn btn-primary" onClick={handleLogin} disabled={loading}
-              style={{ width: '100%', padding: '14px 0', marginTop: 4, fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-              <IonIcon icon={logInOutline} style={{ fontSize: 20 }} />
+              style={{ width: '100%', padding: '14px 0', marginTop: 4, fontSize: 21, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <IonIcon icon={logInOutline} style={{ fontSize: 25 }} />
               {loading ? 'Aguarde...' : 'Entrar'}
             </button>
 
             {/* Links */}
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
               <button onClick={() => goTo('forgot')} style={linkBtn}>
-                <IonIcon icon={keyOutline} style={{ fontSize: 14, verticalAlign: -2 }} /> Esqueceu a senha?
+                <IonIcon icon={keyOutline} style={{ fontSize: 19, verticalAlign: -2 }} /> Esqueceu a senha?
               </button>
               <button onClick={() => goTo('forgot-username')} style={linkBtn}>
-                <IonIcon icon={personOutline} style={{ fontSize: 14, verticalAlign: -2 }} /> Esqueceu o usuário?
+                <IonIcon icon={personOutline} style={{ fontSize: 19, verticalAlign: -2 }} /> Esqueceu o usuário?
               </button>
             </div>
 
             <div style={{ textAlign: 'center', marginTop: 12, borderTop: '1px solid var(--border)', paddingTop: 20 }}>
-              <button onClick={() => goTo('register')} style={{ ...linkBtn, fontSize: 15 }}>
+              <button onClick={() => goTo('register')} style={{ ...linkBtn, fontSize: 25 }}>
                 Não tem conta? <strong>Criar conta</strong>
               </button>
             </div>
@@ -307,12 +307,12 @@ export default function Login({ mode, onLogin }) {
                 placeholder="Repita a senha" autoComplete="new-password" style={inputStyle} />
             </div>
             <button className="btn btn-primary" onClick={handleSendCode} disabled={loading}
-              style={{ width: '100%', padding: '14px 0', marginTop: 4, fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-              <IonIcon icon={personAddOutline} style={{ fontSize: 20 }} />
+              style={{ width: '100%', padding: '14px 0', marginTop: 4, fontSize: 21, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <IonIcon icon={personAddOutline} style={{ fontSize: 25 }} />
               {loading ? 'Aguarde...' : 'Criar Conta'}
             </button>
             <div style={{ textAlign: 'center', marginTop: 8 }}>
-              <button onClick={() => goTo('login')} style={{ ...linkBtn, fontSize: 15 }}>
+              <button onClick={() => goTo('login')} style={{ ...linkBtn, fontSize: 25 }}>
                 Já tem conta? <strong>Entrar</strong>
               </button>
             </div>
@@ -328,9 +328,9 @@ export default function Login({ mode, onLogin }) {
               width: 64, height: 64, borderRadius: '50%', background: 'rgba(14,203,129,.12)',
               display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8,
             }}>
-              <IonIcon icon={mailOutline} style={{ fontSize: 32, color: 'var(--green)' }} />
+              <IonIcon icon={mailOutline} style={{ fontSize: 37, color: 'var(--green)' }} />
             </div>
-            <p style={{ fontSize: 15, color: 'var(--muted)', textAlign: 'center', lineHeight: 1.5 }}>
+            <p style={{ fontSize: 25, color: 'var(--muted)', textAlign: 'center', lineHeight: 1.5 }}>
               Enviamos um código para<br /><strong style={{ color: 'var(--text)' }}>{regEmail}</strong>
             </p>
             <div style={{ width: '100%' }}>
@@ -338,11 +338,11 @@ export default function Login({ mode, onLogin }) {
               <input type="text" value={verificationCode} onChange={e => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 onKeyDown={e => e.key === 'Enter' && handleVerifyCode()}
                 placeholder="000000" maxLength={6}
-                style={{ ...inputStyle, textAlign: 'center', fontSize: 28, letterSpacing: 12, fontWeight: 700, fontFamily: "'DM Mono', monospace" }} />
+                style={{ ...inputStyle, textAlign: 'center', fontSize: 33, letterSpacing: 12, fontWeight: 700, fontFamily: "'DM Mono', monospace" }} />
             </div>
             <button className="btn btn-primary" onClick={handleVerifyCode} disabled={loading}
-              style={{ width: '100%', padding: '14px 0', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-              <IonIcon icon={checkmarkCircleOutline} style={{ fontSize: 20 }} />
+              style={{ width: '100%', padding: '14px 0', fontSize: 21, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <IonIcon icon={checkmarkCircleOutline} style={{ fontSize: 25 }} />
               {loading ? 'Verificando...' : 'Verificar e Entrar'}
             </button>
             <button onClick={handleResendCode} disabled={loading} style={linkBtn}>Reenviar código</button>
@@ -354,7 +354,7 @@ export default function Login({ mode, onLogin }) {
         {/* ════════════════════════════════════════ */}
         {view === 'forgot' && step === 1 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <p style={{ fontSize: 15, color: 'var(--muted)', textAlign: 'center', lineHeight: 1.5 }}>
+            <p style={{ fontSize: 25, color: 'var(--muted)', textAlign: 'center', lineHeight: 1.5 }}>
               Informe o email cadastrado para receber um código de redefinição de senha.
             </p>
             <div>
@@ -364,12 +364,12 @@ export default function Login({ mode, onLogin }) {
                 placeholder="seu@email.com" autoComplete="email" style={inputStyle} />
             </div>
             <button className="btn btn-primary" onClick={handleForgotPassword} disabled={loading}
-              style={{ width: '100%', padding: '14px 0', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-              <IonIcon icon={mailOutline} style={{ fontSize: 20 }} />
+              style={{ width: '100%', padding: '14px 0', fontSize: 21, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <IonIcon icon={mailOutline} style={{ fontSize: 25 }} />
               {loading ? 'Aguarde...' : 'Enviar Código'}
             </button>
             <div style={{ textAlign: 'center', marginTop: 8 }}>
-              <button onClick={() => goTo('login')} style={{ ...linkBtn, fontSize: 15 }}>
+              <button onClick={() => goTo('login')} style={{ ...linkBtn, fontSize: 25 }}>
                 Lembrou a senha? <strong>Entrar</strong>
               </button>
             </div>
@@ -385,16 +385,16 @@ export default function Login({ mode, onLogin }) {
               width: 64, height: 64, borderRadius: '50%', background: 'rgba(252,213,53,.12)',
               display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px',
             }}>
-              <IonIcon icon={lockClosedOutline} style={{ fontSize: 32, color: 'var(--primary)' }} />
+              <IonIcon icon={lockClosedOutline} style={{ fontSize: 37, color: 'var(--primary)' }} />
             </div>
-            <p style={{ fontSize: 15, color: 'var(--muted)', textAlign: 'center', lineHeight: 1.5 }}>
+            <p style={{ fontSize: 25, color: 'var(--muted)', textAlign: 'center', lineHeight: 1.5 }}>
               Enviamos um código para<br /><strong style={{ color: 'var(--text)' }}>{resetEmail}</strong>
             </p>
             <div>
               <label style={labelStyle}>Código de Verificação</label>
               <input type="text" value={resetCode} onChange={e => setResetCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 placeholder="000000" maxLength={6}
-                style={{ ...inputStyle, textAlign: 'center', fontSize: 24, letterSpacing: 10, fontWeight: 700, fontFamily: "'DM Mono', monospace" }} />
+                style={{ ...inputStyle, textAlign: 'center', fontSize: 29, letterSpacing: 10, fontWeight: 700, fontFamily: "'DM Mono', monospace" }} />
             </div>
             <div>
               <label style={labelStyle}>Nova Senha</label>
@@ -408,8 +408,8 @@ export default function Login({ mode, onLogin }) {
                 placeholder="Repita a nova senha" autoComplete="new-password" style={inputStyle} />
             </div>
             <button className="btn btn-primary" onClick={handleResetPassword} disabled={loading}
-              style={{ width: '100%', padding: '14px 0', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-              <IonIcon icon={checkmarkCircleOutline} style={{ fontSize: 20 }} />
+              style={{ width: '100%', padding: '14px 0', fontSize: 21, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <IonIcon icon={checkmarkCircleOutline} style={{ fontSize: 25 }} />
               {loading ? 'Redefinindo...' : 'Redefinir Senha'}
             </button>
             <div style={{ textAlign: 'center' }}>
@@ -423,7 +423,7 @@ export default function Login({ mode, onLogin }) {
         {/* ════════════════════════════════════════ */}
         {view === 'forgot-username' && step === 1 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <p style={{ fontSize: 15, color: 'var(--muted)', textAlign: 'center', lineHeight: 1.5 }}>
+            <p style={{ fontSize: 25, color: 'var(--muted)', textAlign: 'center', lineHeight: 1.5 }}>
               Informe o email cadastrado para receber seu nome de usuário.
             </p>
             <div>
@@ -433,12 +433,12 @@ export default function Login({ mode, onLogin }) {
                 placeholder="seu@email.com" autoComplete="email" style={inputStyle} />
             </div>
             <button className="btn btn-primary" onClick={handleForgotUsername} disabled={loading}
-              style={{ width: '100%', padding: '14px 0', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-              <IonIcon icon={mailOutline} style={{ fontSize: 20 }} />
+              style={{ width: '100%', padding: '14px 0', fontSize: 21, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <IonIcon icon={mailOutline} style={{ fontSize: 25 }} />
               {loading ? 'Aguarde...' : 'Enviar Nome de Usuário'}
             </button>
             <div style={{ textAlign: 'center', marginTop: 8 }}>
-              <button onClick={() => goTo('login')} style={{ ...linkBtn, fontSize: 15 }}>
+              <button onClick={() => goTo('login')} style={{ ...linkBtn, fontSize: 25 }}>
                 Lembrou o usuário? <strong>Entrar</strong>
               </button>
             </div>
@@ -454,15 +454,15 @@ export default function Login({ mode, onLogin }) {
               width: 64, height: 64, borderRadius: '50%', background: 'rgba(14,203,129,.12)',
               display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8,
             }}>
-              <IonIcon icon={checkmarkCircleOutline} style={{ fontSize: 32, color: 'var(--green)' }} />
+              <IonIcon icon={checkmarkCircleOutline} style={{ fontSize: 37, color: 'var(--green)' }} />
             </div>
-            <p style={{ fontSize: 15, color: 'var(--muted)', textAlign: 'center', lineHeight: 1.5 }}>
+            <p style={{ fontSize: 25, color: 'var(--muted)', textAlign: 'center', lineHeight: 1.5 }}>
               Se <strong style={{ color: 'var(--text)' }}>{forgotUserEmail}</strong> estiver cadastrado,
               você receberá seu nome de usuário por email.
             </p>
             <button className="btn btn-primary" onClick={() => goTo('login')}
-              style={{ width: '100%', padding: '14px 0', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-              <IonIcon icon={logInOutline} style={{ fontSize: 20 }} />
+              style={{ width: '100%', padding: '14px 0', fontSize: 21, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <IonIcon icon={logInOutline} style={{ fontSize: 25 }} />
               Ir para Login
             </button>
           </div>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { IonModal, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonSearchbar, IonAlert, IonContent } from '@ionic/react';
 import { closeOutline } from 'ionicons/icons';
 import { getDB, saveDB, uid, fc } from '../services/db';
+import { HistoryActions } from '../services/historyService';
 import StatusBadge from '../components/StatusBadge';
 
 export default function Produtos() {
@@ -24,11 +25,21 @@ export default function Produtos() {
 
   const save = () => {
     if (!form.nome) return;
-    if (modal.mode === 'edit') Object.assign(db.produtos.find(x => x.id === modal.id), form);
-    else db.produtos.push({ ...form, id: uid() });
+    if (modal.mode === 'edit') {
+      Object.assign(db.produtos.find(x => x.id === modal.id), form);
+      HistoryActions.productUpdated(form.nome);
+    } else {
+      db.produtos.push({ ...form, id: uid() });
+      HistoryActions.productCreated(form.nome);
+    }
     saveDB(); refresh(); close();
   };
-  const del = (id) => { getDB().produtos = getDB().produtos.filter(p => p.id !== id); saveDB(); refresh(); setConfirmDel(null); };
+  const del = (id) => {
+    const p = getDB().produtos.find(p => p.id === id);
+    HistoryActions.productDeleted(p?.nome || 'Desconhecido');
+    getDB().produtos = getDB().produtos.filter(p => p.id !== id);
+    saveDB(); refresh(); setConfirmDel(null);
+  };
 
   const viewP = modal?.mode === 'view' ? db.produtos.find(p => p.id === modal.id) : null;
   const cats = ['Brinde', 'Serviço', 'Software', 'Material', 'Outro'];

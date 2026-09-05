@@ -8,6 +8,7 @@ import {
 import { loadDB } from './services/db';
 import { loadFormulasFromServer } from './services/formulaService';
 import { api } from './services/api';
+import { HistoryActions } from './services/historyService';
 
 import Landing from './pages/Landing';
 import Login from './pages/Login';
@@ -138,6 +139,7 @@ const App = () => {
     const next = !isLight;
     setIsLight(next);
     localStorage.setItem('angler_theme', next ? 'light' : 'dark');
+    HistoryActions.themeChanged(next);
   };
 
   useEffect(() => {
@@ -162,9 +164,11 @@ const App = () => {
     localStorage.removeItem('angler_formulas');
     await Promise.all([loadDB(), loadFormulasFromServer()]);
     setUser(username);
+    HistoryActions.login(username);
   };
 
   const handleLogout = () => {
+    HistoryActions.logout();
     sessionStorage.removeItem('angler_token');
     setUser(null);
   };

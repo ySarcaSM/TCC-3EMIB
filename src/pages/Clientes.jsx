@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { IonModal, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonSearchbar, IonAlert, IonContent } from '@ionic/react';
 import { closeOutline } from 'ionicons/icons';
 import { getDB, saveDB, uid, fd, fc } from '../services/db';
+import { HistoryActions } from '../services/historyService';
 import StatusBadge from '../components/StatusBadge';
 
 export default function Clientes() {
@@ -25,11 +26,21 @@ export default function Clientes() {
 
   const save = () => {
     if (!form.nome) return;
-    if (modal.mode === 'edit') { Object.assign(db.clientes.find(x => x.id === modal.id), form); }
-    else { db.clientes.push({ ...form, id: uid(), dataCadastro: new Date().toISOString().slice(0, 10) }); }
+    if (modal.mode === 'edit') {
+      Object.assign(db.clientes.find(x => x.id === modal.id), form);
+      HistoryActions.clientUpdated(form.nome);
+    } else {
+      db.clientes.push({ ...form, id: uid(), dataCadastro: new Date().toISOString().slice(0, 10) });
+      HistoryActions.clientCreated(form.nome);
+    }
     saveDB(); refresh(); close();
   };
-  const del = (id) => { getDB().clientes = getDB().clientes.filter(c => c.id !== id); saveDB(); refresh(); setConfirmDel(null); };
+  const del = (id) => {
+    const c = getDB().clientes.find(c => c.id === id);
+    HistoryActions.clientDeleted(c?.nome || 'Desconhecido');
+    getDB().clientes = getDB().clientes.filter(c => c.id !== id);
+    saveDB(); refresh(); setConfirmDel(null);
+  };
 
   const viewC = modal?.mode === 'view' ? db.clientes.find(c => c.id === modal.id) : null;
   const viewOrcs = viewC ? db.orcamentos.filter(o => o.clienteId === viewC.id) : [];
