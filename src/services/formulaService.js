@@ -1,39 +1,30 @@
+// ═══════════════════════════════════════════════════════════
+// src/services/formulaService.js — CORRIGIDO: sincronização com MongoDB
+// ═══════════════════════════════════════════════════════════
+
 import { api } from './api';
 
 let formulas = [];
-let serverAvailable = false;
-
-async function checkServer() {
-  try {
-    const resp = await fetch('/api/health', { signal: AbortSignal.timeout(2000) });
-    serverAvailable = resp.ok;
-  } catch {
-    serverAvailable = false;
-  }
-  return serverAvailable;
-}
 
 export async function loadFormulasFromServer() {
-  // LocalStorage primeiro
+  // LocalStorage primeiro (fallback)
   try { formulas = JSON.parse(localStorage.getItem('angler_formulas')) || []; } catch { formulas = []; }
 
-  // Tenta server
-  const online = await checkServer();
-  if (online) {
-    try {
-      const data = await api.getData('formulas/info');
-      if (data?.formulas) formulas = data.formulas;
-      localStorage.setItem('angler_formulas', JSON.stringify(formulas));
-    } catch {}
+  // Tenta server (sempre tenta, sem flag)
+  try {
+    const data = await api.getData('formulas/info');
+    if (data?.formulas) formulas = data.formulas;
+    localStorage.setItem('angler_formulas', JSON.stringify(formulas));
+  } catch {
+    // Server indisponível — localStorage já foi carregado
   }
   return formulas;
 }
 
 function saveFormulas() {
   localStorage.setItem('angler_formulas', JSON.stringify(formulas));
-  if (serverAvailable) {
-    api.saveData('formulas/info', { formulas }).catch(() => {});
-  }
+  // Sempre tenta sincronizar com server
+  api.saveData('formulas/info', { formulas }).catch(() => {});
 }
 
 export function getAllFormulas() { return formulas; }

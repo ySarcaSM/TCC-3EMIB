@@ -1,10 +1,5 @@
 // ═══════════════════════════════════════════════════════════
-// CORREÇÕES APLICADAS — src/services/db.js
-// ═══════════════════════════════════════════════════════════
-// 
-// BUG #5 CORRIGIDO: fd() agora valida o formato da data
-// Antes: aceitava qualquer string e splitava por '-', causando undefined/undefined/undefined
-// Depois: valida formato YYYY-MM-DD antes de fazer o split
+// src/services/db.js — CORRIGIDO: sincronização com MongoDB
 // ═══════════════════════════════════════════════════════════
 
 import { api } from './api';
@@ -15,19 +10,6 @@ let db = {
   orcamentos: [],
 };
 
-let serverAvailable = false;
-
-// Testar se server está disponível
-async function checkServer() {
-  try {
-    const resp = await fetch('/api/health', { signal: AbortSignal.timeout(2000) });
-    serverAvailable = resp.ok;
-  } catch {
-    serverAvailable = false;
-  }
-  return serverAvailable;
-}
-
 export function getDB() {
   return db;
 }
@@ -36,43 +18,38 @@ export async function loadDB() {
   // Resetar para estado vazio
   db = { clientes: [], produtos: [], orcamentos: [] };
 
-  // Carregar do localStorage
+  // Carregar do localStorage como fallback
   try {
     const saved = JSON.parse(localStorage.getItem('anglerDB'));
     if (saved) db = { ...db, ...saved };
   } catch {}
 
-  // Tenta carregar do server
-  const online = await checkServer();
-  if (online) {
-    try {
-      const [clients, products, budgets] = await Promise.all([
-        api.getData('clients/info'),
-        api.getData('products/info'),
-        api.getData('budgets/info'),
-      ]);
-      // Só sobrescreve se o server retornou dados
-      if (clients?.clientes) db.clientes = clients.clientes;
-      if (products?.produtos) db.produtos = products.produtos;
-      if (budgets?.orcamentos) db.orcamentos = budgets.orcamentos;
-
-      localStorage.setItem('anglerDB', JSON.stringify(db));
-    } catch {}
+  // Tenta carregar do server (sempre tenta, sem flag)
+  try {
+    const [clients, products, budgets] = await Promise.all([
+      api.getData('clients/info'),
+      api.getData('products/info'),
+      api.getData('budgets/info'),
+    ]);
+    if (clients?.clientes) db.clientes = clients.clientes;
+    if (products?.produtos) db.produtos = products.produtos;
+    if (budgets?.orcamentos) db.orcamentos = budgets.orcamentos;
+    localStorage.setItem('anglerDB', JSON.stringify(db));
+  } catch {
+    // Server indisponível — localStorage já foi carregado acima
   }
 }
 
 export function saveDB() {
-  // Salva no localStorage imediatamente
+  // Salva no localStorage imediatamente (sempre funciona)
   localStorage.setItem('anglerDB', JSON.stringify(db));
 
-  // Se server disponível, sincroniza em background
-  if (serverAvailable) {
-    Promise.all([
-      api.saveData('clients/info', { clientes: db.clientes }),
-      api.saveData('products/info', { produtos: db.produtos }),
-      api.saveData('budgets/info', { orcamentos: db.orcamentos }),
-    ]).catch(() => {});
-  }
+  // Tenta sincronizar com server (sempre tenta, sem checar flag)
+  Promise.all([
+    api.saveData('clients/info', { clientes: db.clientes }),
+    api.saveData('products/info', { produtos: db.produtos }),
+    api.saveData('budgets/info', { orcamentos: db.orcamentos }),
+  ]).catch(() => {});
 }
 
 export function uid() {

@@ -1,31 +1,58 @@
-// historyService.js — Registro de atividades do usuário
+// ═══════════════════════════════════════════════════════════
+// src/services/historyService.js — CORRIGIDO: sincronização com MongoDB
+// ═══════════════════════════════════════════════════════════
+
+import { api } from './api';
 
 const STORAGE_KEY = 'angler_history';
 const MAX_ENTRIES = 200;
 
+let historyLoaded = false;
+let entries = [];
+
 function getHistory() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-  } catch {
-    return [];
+  if (!historyLoaded) {
+    try {
+      entries = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    } catch {
+      entries = [];
+    }
+    historyLoaded = true;
   }
+  return entries;
 }
 
-function save(entries) {
-  // Limitar a MAX_ENTRIES
+function save() {
   const trimmed = entries.slice(0, MAX_ENTRIES);
+  entries = trimmed;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
+  // Sincroniza com server
+  api.saveData('history/info', { history: trimmed }).catch(() => {});
+}
+
+/** Carrega histórico do server (chamar no login) */
+export async function loadHistoryFromServer() {
+  try {
+    entries = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+  } catch {
+    entries = [];
+  }
+  try {
+    const data = await api.getData('history/info');
+    if (data?.history) {
+      entries = data.history;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    }
+  } catch {}
+  historyLoaded = true;
+  return entries;
 }
 
 /**
  * Registra uma ação no histórico
- * @param {string} action - Tipo da ação (ex: "Cliente cadastrado")
- * @param {string} detail - Detalhe da ação (ex: "North Bag Indústria")
- * @param {string} icon - Nome do ícone Ionicons (ex: "peopleOutline")
- * @param {string} color - Cor do ícone (hex)
  */
 export function logAction(action, detail, icon = 'flashOutline', color = '#3b82f6') {
-  const entries = getHistory();
+  getHistory();
   entries.unshift({
     id: `h${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
     action,
@@ -34,7 +61,7 @@ export function logAction(action, detail, icon = 'flashOutline', color = '#3b82f
     color,
     timestamp: new Date().toISOString(),
   });
-  save(entries);
+  save();
 }
 
 /**
@@ -51,7 +78,9 @@ export function getFullHistory() {
  * Limpa o histórico
  */
 export function clearHistory() {
+  entries = [];
   localStorage.removeItem(STORAGE_KEY);
+  api.saveData('history/info', { history: [] }).catch(() => {});
 }
 
 // ── Atalhos para ações comuns ──

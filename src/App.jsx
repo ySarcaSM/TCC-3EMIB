@@ -9,7 +9,7 @@ import {
 import { loadDB } from './services/db';
 import { loadFormulasFromServer } from './services/formulaService';
 import { api } from './services/api';
-import { HistoryActions } from './services/historyService';
+import { HistoryActions, loadHistoryFromServer } from './services/historyService';
 
 import Landing from './pages/Landing';
 import Login from './pages/Login';
@@ -153,6 +153,8 @@ const App = () => {
     const next = !isLight;
     setIsLight(next);
     localStorage.setItem('angler_theme', next ? 'light' : 'dark');
+    // Salvar tema no server
+    api.saveData('preferences/info', { theme: next ? 'light' : 'dark' }).catch(() => {});
     HistoryActions.themeChanged(next);
   };
 
@@ -161,7 +163,16 @@ const App = () => {
     if (token) {
       api.verify()
         .then(async (data) => {
-          await Promise.all([loadDB(), loadFormulasFromServer()]);
+          await Promise.all([loadDB(), loadFormulasFromServer(), loadHistoryFromServer()]);
+          // Carregar tema do server
+          try {
+            const prefs = await api.getData('preferences/info');
+            if (prefs?.theme) {
+              const isLightTheme = prefs.theme === 'light';
+              setIsLight(isLightTheme);
+              localStorage.setItem('angler_theme', isLightTheme ? 'light' : 'dark');
+            }
+          } catch {}
           setUser(data.username);
         })
         .catch(() => {
@@ -176,7 +187,16 @@ const App = () => {
   const handleLogin = async (username) => {
     localStorage.removeItem('anglerDB');
     localStorage.removeItem('angler_formulas');
-    await Promise.all([loadDB(), loadFormulasFromServer()]);
+    await Promise.all([loadDB(), loadFormulasFromServer(), loadHistoryFromServer()]);
+    // Carregar tema do server
+    try {
+      const prefs = await api.getData('preferences/info');
+      if (prefs?.theme) {
+        const isLightTheme = prefs.theme === 'light';
+        setIsLight(isLightTheme);
+        localStorage.setItem('angler_theme', isLightTheme ? 'light' : 'dark');
+      }
+    } catch {}
     setUser(username);
     HistoryActions.login(username);
   };

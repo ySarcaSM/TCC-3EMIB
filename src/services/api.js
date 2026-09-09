@@ -1,3 +1,7 @@
+// ═══════════════════════════════════════════════════════════
+// src/services/api.js — COM LOGS DE DIAGNÓSTICO
+// ═══════════════════════════════════════════════════════════
+
 const API_URL = '/api';
 
 async function request(method, path, body) {
@@ -11,32 +15,46 @@ async function request(method, path, body) {
   };
   if (body !== undefined) opts.body = JSON.stringify(body);
 
-  const resp = await fetch(`${API_URL}${path}`, opts);
+  const url = `${API_URL}${path}`;
+  console.log(`[API] ${method} ${url}`, body || '');
 
-  // ✅ FIX: NÃO recarrega a página em endpoints de auth (login, cadastro, etc)
-  // Só recarrega quando a sessão expira em endpoints autenticados
-  if (resp.status === 401) {
-    const isAuthEndpoint = path.startsWith('/auth/login') ||
-                           path.startsWith('/auth/send-code') ||
-                           path.startsWith('/auth/verify-code') ||
-                           path.startsWith('/auth/forgot-password') ||
-                           path.startsWith('/auth/reset-password') ||
-                           path.startsWith('/auth/forgot-username');
+  try {
+    const resp = await fetch(url, opts);
+    console.log(`[API] ${method} ${url} → ${resp.status}`);
 
-    if (!isAuthEndpoint) {
-      // Sessão expirou em endpoint autenticado — recarrega
-      sessionStorage.removeItem('angler_token');
-      window.location.reload();
+    // ✅ FIX: NÃO recarrega a página em endpoints de auth (login, cadastro, etc)
+    // Só recarrega quando a sessão expira em endpoints autenticados
+    if (resp.status === 401) {
+      const isAuthEndpoint = path.startsWith('/auth/login') ||
+                             path.startsWith('/auth/send-code') ||
+                             path.startsWith('/auth/verify-code') ||
+                             path.startsWith('/auth/forgot-password') ||
+                             path.startsWith('/auth/reset-password') ||
+                             path.startsWith('/auth/forgot-username');
+
+      if (!isAuthEndpoint) {
+        // Sessão expirou em endpoint autenticado — recarrega
+        sessionStorage.removeItem('angler_token');
+        window.location.reload();
+      }
+
+      // Sempre lança o erro para o chamador tratar
+      const data = await resp.json().catch(() => ({}));
+      throw new Error(data.error || 'Usuário ou senha incorretos.');
     }
 
-    // Sempre lança o erro para o chamador tratar
     const data = await resp.json().catch(() => ({}));
-    throw new Error(data.error || 'Usuário ou senha incorretos.');
+    if (!resp.ok) {
+      console.error(`[API] ${method} ${url} ERRO:`, data.error || `Status ${resp.status}`);
+      throw new Error(data.error || `Erro ${resp.status}`);
+    }
+    return data;
+  } catch (err) {
+    if (err.name === 'TypeError' && err.message.includes('fetch')) {
+      console.error(`[API] ${method} ${url} FALHA DE REDE:`, err.message);
+    }
+    throw err;
   }
-
-  const data = await resp.json().catch(() => ({}));
-  if (!resp.ok) throw new Error(data.error || `Erro ${resp.status}`);
-  return data;
 }
 
 export const api = {
