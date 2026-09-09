@@ -143,9 +143,14 @@ export default function Login({ mode, onLogin }) {
     setLoading(false);
   };
 
-  // ── Esqueceu senha — Step 2: redefinir
+  // ── Esqueceu senha — Step 2: verificar código
+  const handleVerifyResetCode = () => {
+    if (!resetCode.trim() || resetCode.trim().length < 6) { show('Digite o código de 6 dígitos.'); return; }
+    setStep(3);
+  };
+
+  // ── Esqueceu senha — Step 3: redefinir
   const handleResetPassword = async () => {
-    if (!resetCode.trim()) { show('Digite o código.'); return; }
     if (resetNewPass.length < 6) { show('Nova senha precisa ter pelo menos 6 caracteres.'); return; }
     if (resetNewPass !== resetConfirmPass) { show('As senhas não conferem.'); return; }
     setLoading(true);
@@ -186,8 +191,11 @@ export default function Login({ mode, onLogin }) {
   };
 
   const handleBack = () => {
+    // Se está no step 3 (redefinir senha), volta pro step 2 (verificar código)
+    if (step === 3 && view === 'forgot') { setStep(2); setToast(''); return; }
+    // Se está num step avançado, volta pro step 1
     if (step > 1) { setStep(1); setToast(''); return; }
-    if (view !== 'login') { goTo('login'); return; }
+    // Em qualquer view no step 1, volta pra landing page
     history.push('/');
   };
 
@@ -222,7 +230,7 @@ export default function Login({ mode, onLogin }) {
           <p style={{ fontSize: 25, color: 'var(--muted)', marginTop: 4 }}>
             {view === 'login' && 'Entre na sua conta'}
             {view === 'register' && (step === 1 ? 'Crie sua conta' : 'Verifique seu email')}
-            {view === 'forgot' && (step === 1 ? 'Recuperar senha' : 'Redefinir senha')}
+            {view === 'forgot' && (step === 1 ? 'Recuperar senha' : step === 2 ? 'Verificar código' : 'Redefinir senha')}
             {view === 'forgot-username' && (step === 1 ? 'Recuperar usuário' : 'Email enviado')}
           </p>
         </div>
@@ -377,7 +385,7 @@ export default function Login({ mode, onLogin }) {
         )}
 
         {/* ════════════════════════════════════════ */}
-        {/* ESQUECEU SENHA — Step 2: Nova senha       */}
+        {/* ESQUECEU SENHA — Step 2: Verificar código */}
         {/* ════════════════════════════════════════ */}
         {view === 'forgot' && step === 2 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -385,7 +393,7 @@ export default function Login({ mode, onLogin }) {
               width: 64, height: 64, borderRadius: '50%', background: 'rgba(252,213,53,.12)',
               display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px',
             }}>
-              <IonIcon icon={lockClosedOutline} style={{ fontSize: 37, color: 'var(--primary)' }} />
+              <IonIcon icon={mailOutline} style={{ fontSize: 37, color: 'var(--primary)' }} />
             </div>
             <p style={{ fontSize: 25, color: 'var(--muted)', textAlign: 'center', lineHeight: 1.5 }}>
               Enviamos um código para<br /><strong style={{ color: 'var(--text)' }}>{resetEmail}</strong>
@@ -393,9 +401,33 @@ export default function Login({ mode, onLogin }) {
             <div>
               <label style={labelStyle}>Código de Verificação</label>
               <input type="text" value={resetCode} onChange={e => setResetCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                onKeyDown={e => e.key === 'Enter' && handleVerifyResetCode()}
                 placeholder="000000" maxLength={6}
                 style={{ ...inputStyle, textAlign: 'center', fontSize: 29, letterSpacing: 10, fontWeight: 700, fontFamily: "'DM Mono', monospace" }} />
             </div>
+            <button className="btn btn-primary" onClick={handleVerifyResetCode} disabled={loading}
+              style={{ width: '100%', padding: '14px 0', fontSize: 21, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <IonIcon icon={checkmarkCircleOutline} style={{ fontSize: 25 }} />
+              Verificar Código
+            </button>
+            <button onClick={handleForgotPassword} disabled={loading} style={linkBtn}>Reenviar código</button>
+          </div>
+        )}
+
+        {/* ════════════════════════════════════════ */}
+        {/* ESQUECEU SENHA — Step 3: Nova senha       */}
+        {/* ════════════════════════════════════════ */}
+        {view === 'forgot' && step === 3 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{
+              width: 64, height: 64, borderRadius: '50%', background: 'rgba(14,203,129,.12)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px',
+            }}>
+              <IonIcon icon={lockClosedOutline} style={{ fontSize: 37, color: 'var(--green)' }} />
+            </div>
+            <p style={{ fontSize: 25, color: 'var(--muted)', textAlign: 'center', lineHeight: 1.5 }}>
+              Código verificado! Defina sua nova senha para<br /><strong style={{ color: 'var(--text)' }}>{resetEmail}</strong>
+            </p>
             <div>
               <label style={labelStyle}>Nova Senha</label>
               <input type="password" value={resetNewPass} onChange={e => setResetNewPass(e.target.value)}

@@ -1,3 +1,12 @@
+// ═══════════════════════════════════════════════════════════
+// CORREÇÕES APLICADAS — src/pages/Clientes.jsx
+// ═══════════════════════════════════════════════════════════
+//
+// BUG #3 CORRIGIDO: del() agora usa o state `db` em vez de getDB()
+// Antes: getDB().clientes = ... mutava o objeto global sem trigger de re-render
+// Depois: db.clientes = ... muta o state local + saveDB() para persistir
+// ═══════════════════════════════════════════════════════════
+
 import React, { useState } from 'react';
 import { IonModal, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonSearchbar, IonAlert, IonContent } from '@ionic/react';
 import { closeOutline } from 'ionicons/icons';
@@ -35,10 +44,12 @@ export default function Clientes() {
     }
     saveDB(); refresh(); close();
   };
+
+  // ✅ BUG #3 CORRIGIDO: usa state `db` em vez de getDB() para mutação
   const del = (id) => {
-    const c = getDB().clientes.find(c => c.id === id);
+    const c = db.clientes.find(c => c.id === id);
     HistoryActions.clientDeleted(c?.nome || 'Desconhecido');
-    getDB().clientes = getDB().clientes.filter(c => c.id !== id);
+    db.clientes = db.clientes.filter(c => c.id !== id);
     saveDB(); refresh(); setConfirmDel(null);
   };
 
@@ -129,7 +140,6 @@ export default function Clientes() {
             <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--border)', display: 'flex', gap: 24 }}>
               <span style={{ fontSize: 13, color: 'var(--muted)' }}>Orçamentos: <strong style={{ color: 'var(--text)' }}>{viewOrcs.length}</strong></span>
               <span style={{ fontSize: 13, color: 'var(--muted)' }}>Volume: <strong style={{ color: 'var(--primary)' }}>{fc(viewTotal)}</strong></span>
-
             </div>
           </div>
         </IonContent>

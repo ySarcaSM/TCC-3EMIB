@@ -1,3 +1,10 @@
+// ═══════════════════════════════════════════════════════════
+// CORREÇÕES APLICADAS — src/pages/Produtos.jsx
+// ═══════════════════════════════════════════════════════════
+//
+// BUG #3 CORRIGIDO: del() agora usa o state `db` em vez de getDB()
+// ═══════════════════════════════════════════════════════════
+
 import React, { useState } from 'react';
 import { IonModal, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonSearchbar, IonAlert, IonContent } from '@ionic/react';
 import { closeOutline } from 'ionicons/icons';
@@ -34,10 +41,12 @@ export default function Produtos() {
     }
     saveDB(); refresh(); close();
   };
+
+  // ✅ BUG #3 CORRIGIDO: usa state `db` em vez de getDB()
   const del = (id) => {
-    const p = getDB().produtos.find(p => p.id === id);
+    const p = db.produtos.find(p => p.id === id);
     HistoryActions.productDeleted(p?.nome || 'Desconhecido');
-    getDB().produtos = getDB().produtos.filter(p => p.id !== id);
+    db.produtos = db.produtos.filter(p => p.id !== id);
     saveDB(); refresh(); setConfirmDel(null);
   };
 

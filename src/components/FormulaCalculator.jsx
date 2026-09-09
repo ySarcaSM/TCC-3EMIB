@@ -1,3 +1,12 @@
+// ═══════════════════════════════════════════════════════════
+// CORREÇÕES APLICADAS — src/components/FormulaCalculator.jsx
+// ═══════════════════════════════════════════════════════════
+//
+// BUG #6 CORRIGIDO: regex com $$ inválido → removido $ extra
+// Antes: /[.*+?^${}()|[\]$$\\]/g  ($$ é literal "$$" não delimitador)
+// Depois: /[.*+?^${}()|[\]\\]/g   (correto, $ já está no set)
+// ═══════════════════════════════════════════════════════════
+
 import React, { useState, useEffect } from 'react';
 import { IonButton, IonIcon, IonToast } from '@ionic/react';
 import { closeOutline, copyOutline } from 'ionicons/icons';
@@ -52,7 +61,8 @@ export default function FormulaCalculator({ formula, onClose }) {
       const sorted = Object.entries(vals).sort((a, b) => b[0].length - a[0].length);
       for (const [n, v] of sorted) {
         if (!v) continue;
-        const r = new RegExp(`(?<![a-zA-Z])${n.replace(/[.*+?^${}()|[\]$$\\]/g, '\\$&')}(?![a-zA-Z])`, 'g');
+        // ✅ BUG #6 CORRIGIDO: regex escapado corretamente
+        const r = new RegExp(`(?<![a-zA-Z])${n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![a-zA-Z])`, 'g');
         expr = expr.replace(r, `(${v})`);
       }
       expr = expr.replace(/\\left|\\right/g, '').replace(/\\text\{[^}]*\}/g, '0');
@@ -61,14 +71,14 @@ export default function FormulaCalculator({ formula, onClose }) {
       expr = expr.replace(/\^(\{[^}]+\}|\S+)/g, (_, e) => '**(' + e.replace(/[{}]/g, '') + ')');
       expr = expr.replace(/\\cdot|\\times/g, '*').replace(/\\div/g, '/');
       expr = expr.replace(/\\pi/g, `(${Math.PI})`).replace(/\\infty/g, 'Infinity');
-      expr = expr.replace(/\\left$$/g, '(').replace(/\\right$$/g, ')');
-      expr = expr.replace(/\\left$$/g, '[').replace(/\\right$$/g, ']');
+      expr = expr.replace(/\\left\(/g, '(').replace(/\\right\)/g, ')');
+      expr = expr.replace(/\\left\[/g, '[').replace(/\\right\]/g, ']');
       expr = expr.replace(/\\left\\\{/g, '(').replace(/\\right\\\}/g, ')');
       expr = expr.replace(/\\pm/g, '+').replace(/\\mp/g, '-');
       expr = expr.replace(/\\sin\(/g, 'Math.sin(').replace(/\\cos\(/g, 'Math.cos(').replace(/\\tan\(/g, 'Math.tan(');
       expr = expr.replace(/\\ln\(/g, 'Math.log(').replace(/\\log\(/g, 'Math.log10(').replace(/\\abs\(/g, 'Math.abs(');
       expr = expr.replace(/\\quad|\\,/g, ' ').replace(/\\\\/g, '').replace(/\\[a-zA-Z]+/g, '');
-      expr = expr.replace(/[^0-9+\-*/().,%^ \n\r\t]/g, '');
+      expr = expr.replace(/[^0-9+\-*/().,%^\s]/g, '');
       const r = Function('"use strict";return(' + expr + ')')();
       if (typeof r === 'number' && !isNaN(r) && isFinite(r)) {
         const v = parseFloat(r.toPrecision(10));

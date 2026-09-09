@@ -227,29 +227,160 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .empty svg{width:48px;height:48px;margin-bottom:16px;opacity:.4}
 .empty p{font-size:23px}
 
-/* Responsive */
-@media(max-width:1200px){.dash-kpis{grid-template-columns:repeat(2,1fr)}.dash-grid{grid-template-columns:1fr}}
-@media(max-width:768px){.sidebar{display:none}.dash-kpis{grid-template-columns:1fr}.field-row{grid-template-columns:1fr}} 
+/* ══════════════════════════════════════════════
+   RESPONSIVIDADE COMPLETA
+   ══════════════════════════════════════════════ */
 
-/* Sidebar always visible on desktop */
-@media (min-width: 769px) {
-  ion-menu {
-    --width: 240px;
-    --max-width: 240px;
-  }
-  /* Force menu always visible */
-  .app-layout {
-    display: flex;
-    height: 100vh;
-    width: 100%;
-  }
+/* ─── Tablet (≤1200px) ─── */
+@media(max-width:1200px){
+  .dash-kpis{grid-template-columns:repeat(2,1fr)}
+  .dash-grid{grid-template-columns:1fr}
 }
 
-/* Mobile sidebar */
-@media (max-width: 768px) {
+/* ─── Mobile (≤768px) ─── */
+@media(max-width:768px){
+  /* Sidebar: slide-in overlay */
   .sidebar {
-    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform .25s ease;
+    display: flex;
   }
+  .sidebar.sidebar-open {
+    transform: translateX(0);
+  }
+  .sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.5);
+    z-index: 999;
+    animation: fadeIn .2s ease;
+  }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+  /* Hamburger button */
+  .menu-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px; height: 40px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .menu-toggle:active { background: var(--elevated); }
+
+  /* Topbar */
+  .topbar { padding: 0 16px; gap: 12px; }
+  .topbar h1 { font-size: 20px; }
+
+  /* Page content */
+  .page-content { padding: 16px; }
+
+  /* KPI cards */
+  .dash-kpis { grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .kpi { padding: 14px; }
+  .kpi-val { font-size: 28px; }
+  .kpi-label { font-size: 14px; }
+  .kpi-icon { width: 34px; height: 34px; }
+
+  /* Grids */
+  .dash-grid { grid-template-columns: 1fr; gap: 12px; }
+  .detail-grid { grid-template-columns: 1fr; gap: 12px; }
+
+  /* Forms */
+  .field-row { grid-template-columns: 1fr; gap: 10px; }
+  .field label { font-size: 13px; }
+  .field input, .field select, .field textarea { font-size: 16px; padding: 12px 14px; }
+
+  /* Tables: scroll horizontal */
+  .tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .tbl-wrap table { min-width: 700px; }
+  th { font-size: 11px; padding: 10px 12px; }
+  td { font-size: 13px; padding: 10px 12px; }
+  .td-mono { font-size: 13px; }
+
+  /* Badges */
+  .badge { font-size: 11px; padding: 4px 10px; }
+
+  /* Tabs */
+  .tabs { gap: 4px; margin-bottom: 14px; }
+  .tab-btn { padding: 7px 14px; font-size: 13px; }
+
+  /* Buttons */
+  .btn { height: 40px; padding: 8px 16px; font-size: 14px; }
+  .btn-sm { height: 34px; padding: 6px 12px; font-size: 12px; }
+
+  /* Modais: full screen em mobile */
+  ion-modal {
+    --width: 100%;
+    --height: 100%;
+    --border-radius: 0;
+    --box-shadow: none;
+  }
+
+  /* Chart */
+  .chart-bars { height: 120px; }
+  .chart-bar::after { font-size: 10px; }
+  .chart-labels span { font-size: 10px; }
+
+  /* Status list */
+  .status-item-name { font-size: 13px; }
+  .status-item-count { font-size: 15px; }
+
+  /* Detail fields */
+  .detail-field label { font-size: 11px; }
+  .detail-field span { font-size: 15px; }
+
+  /* AI Chat */
+  .ai-chat-body { height: 200px; padding: 12px; }
+  .ai-msg-bubble { font-size: 13px; padding: 10px 14px; }
+  .ai-chip { font-size: 12px; padding: 5px 12px; }
+  .ai-chat-input input { font-size: 14px; padding: 10px 14px; }
+
+  /* Formula cards */
+  .formula-card { padding: 14px; }
+  .formula-card-header h3 { font-size: 15px; }
+  .formula-card-desc { font-size: 13px; }
+  .formula-card-date { font-size: 11px; }
+
+  /* Latex toolbar */
+  .latex-toolbar { gap: 3px; padding: 6px; }
+  .latex-toolbar-btn { font-size: 11px; padding: 3px 6px; }
+
+  /* Empty state */
+  .empty { padding: 40px 16px; }
+  .empty p { font-size: 15px; }
+
+  /* Search */
+  .search-box { width: 100%; }
+
+  /* Items editor */
+  .items-table input { font-size: 13px; padding: 8px 10px; }
+  .item-subtotal { font-size: 13px; }
+  .items-total { font-size: 15px; }
+}
+
+/* ─── Desktop: sidebar sempre visível ─── */
+@media (min-width: 769px) {
+  .menu-toggle { display: none; }
+  .sidebar { display: flex; }
+  .sidebar-overlay { display: none; }
+  .app-layout { display: flex; height: 100vh; width: 100%; }
+}
+
+/* ─── Telas muito pequenas (≤480px) ─── */
+@media(max-width:480px){
+  .dash-kpis { grid-template-columns: 1fr; }
+  .topbar h1 { font-size: 17px; }
+  .page-content { padding: 12px; }
+  .kpi-val { font-size: 24px; }
+  ion-searchbar { font-size: 14px; }
 }
 
 /* Formula Cards */

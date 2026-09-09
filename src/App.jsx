@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Switch, Route, Redirect, useLocation, useHistory } from 'react-router-dom';
 import { IonApp, IonIcon } from '@ionic/react';
 import {
   homeOutline, peopleOutline, cubeOutline, documentTextOutline, flaskOutline,
   logOutOutline, sparklesOutline, timeOutline, sunnyOutline, moonOutline,
+  menuOutline, closeOutline,
 } from 'ionicons/icons';
 import { loadDB } from './services/db';
 import { loadFormulasFromServer } from './services/formulaService';
@@ -43,19 +44,26 @@ const PAGE_TITLES = {
   historico: 'Histórico',
 };
 
-const Sidebar = ({ onLogout, isLight, onToggleTheme }) => {
+const Sidebar = ({ onLogout, isLight, onToggleTheme, isOpen, onClose }) => {
   const location = useLocation();
   const history = useHistory();
   const currentPage = location.pathname.replace('/', '') || 'dashboard';
 
+  const handleNav = (key) => {
+    history.push('/' + key);
+    if (onClose) onClose();
+  };
+
   return (
-    <div className="sidebar">
+    <>
+    {isOpen && <div className="sidebar-overlay" onClick={onClose} />}
+    <div className={`sidebar ${isOpen ? 'sidebar-open' : ''}`}>
       <div className="sb-header"><div className="mark">A</div><span>angler</span></div>
       <nav className="sb-nav">
         {NAV_ITEMS.map((item, i) => {
           if (item.section) return <div key={'s' + i} className="sb-section">{item.section}</div>;
           return (
-            <div key={item.key} className={`sb-item ${currentPage === item.key ? 'active' : ''}`} onClick={() => history.push('/' + item.key)}>
+            <div key={item.key} className={`sb-item ${currentPage === item.key ? 'active' : ''}`} onClick={() => handleNav(item.key)}>
               <IonIcon icon={item.icon} style={{ width: 20, height: 20, opacity: currentPage === item.key ? 1 : 0.7 }} />
               {item.label}
             </div>
@@ -89,25 +97,31 @@ const Sidebar = ({ onLogout, isLight, onToggleTheme }) => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 
-const Topbar = () => {
+const Topbar = ({ onMenuToggle }) => {
   const location = useLocation();
   const currentPage = location.pathname.replace('/', '') || 'dashboard';
   return (
     <div className="topbar">
+      <button className="menu-toggle" onClick={onMenuToggle}>
+        <IonIcon icon={menuOutline} style={{ fontSize: 24 }} />
+      </button>
       <h1>{PAGE_TITLES[currentPage] || 'Dashboard'}</h1>
     </div>
   );
 };
 
 const AppLayout = ({ onLogout, username, isLight, onToggleTheme }) => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
     <div className="app-layout">
-      <Sidebar onLogout={onLogout} isLight={isLight} onToggleTheme={onToggleTheme} />
+      <Sidebar onLogout={onLogout} isLight={isLight} onToggleTheme={onToggleTheme} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="main-area">
-        <Topbar />
+        <Topbar onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
         <div className="page-content">
           <Switch>
             <Route exact path="/dashboard" component={Dashboard} />

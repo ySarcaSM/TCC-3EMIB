@@ -13,10 +13,25 @@ async function request(method, path, body) {
 
   const resp = await fetch(`${API_URL}${path}`, opts);
 
+  // ✅ FIX: NÃO recarrega a página em endpoints de auth (login, cadastro, etc)
+  // Só recarrega quando a sessão expira em endpoints autenticados
   if (resp.status === 401) {
-    sessionStorage.removeItem('angler_token');
-    window.location.reload();
-    throw new Error('Sessão expirada.');
+    const isAuthEndpoint = path.startsWith('/auth/login') ||
+                           path.startsWith('/auth/send-code') ||
+                           path.startsWith('/auth/verify-code') ||
+                           path.startsWith('/auth/forgot-password') ||
+                           path.startsWith('/auth/reset-password') ||
+                           path.startsWith('/auth/forgot-username');
+
+    if (!isAuthEndpoint) {
+      // Sessão expirou em endpoint autenticado — recarrega
+      sessionStorage.removeItem('angler_token');
+      window.location.reload();
+    }
+
+    // Sempre lança o erro para o chamador tratar
+    const data = await resp.json().catch(() => ({}));
+    throw new Error(data.error || 'Usuário ou senha incorretos.');
   }
 
   const data = await resp.json().catch(() => ({}));

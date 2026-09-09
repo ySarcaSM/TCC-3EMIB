@@ -1,3 +1,12 @@
+// ═══════════════════════════════════════════════════════════
+// CORREÇÕES APLICADAS — src/services/db.js
+// ═══════════════════════════════════════════════════════════
+// 
+// BUG #5 CORRIGIDO: fd() agora valida o formato da data
+// Antes: aceitava qualquer string e splitava por '-', causando undefined/undefined/undefined
+// Depois: valida formato YYYY-MM-DD antes de fazer o split
+// ═══════════════════════════════════════════════════════════
+
 import { api } from './api';
 
 let db = {
@@ -70,8 +79,9 @@ export function uid() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
 }
 
+// ✅ BUG #5 CORRIGIDO: validação de formato de data
 export function fd(dateStr) {
-  if (!dateStr) return '—';
+  if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return '—';
   const [y, m, d] = dateStr.split('-');
   return `${d}/${m}/${y}`;
 }

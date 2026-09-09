@@ -29,10 +29,10 @@ function buildContext() {
   const db = getDB();
   const formulas = getAllFormulas();
   const clientes = db.clientes.map(c => `${c.nome} (${c.tipo}, ${c.status}, doc:${c.documento})`).join('; ') || 'Nenhum';
-  const produtos = db.produtos.map(p => `${p.nome} [${p.categoria}] R$${p.valor} estoque:{p.estoque} (${p.status})`).join('; ') || 'Nenhum';
+  const produtos = db.produtos.map(p => `${p.nome} [${p.categoria}] R$${p.valor} estoque:${p.estoque} (${p.status})`).join('; ') || 'Nenhum';
   const orcamentos = db.orcamentos.map(o => {
     const cli = db.clientes.find(c => c.id === o.clienteId)?.nome || '?';
-    return `${o.codigo} - ${cli} - ${o.descricao} - R$$$${o.valor} (${o.status})`;
+    return `${o.codigo} - ${cli} - ${o.descricao} - R$${o.valor} (${o.status})`;
   }).join('; ') || 'Nenhum';
   const formulaInfo = formulas.map(f => `${f.nome}: ${f.latex} [vars: ${(f.variaveis || []).join(',')}]`).join('; ') || 'Nenhuma';
 
