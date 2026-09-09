@@ -7,16 +7,66 @@
 // Depois: db.clientes = ... muta o state local + saveDB() para persistir
 // ═══════════════════════════════════════════════════════════
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { IonModal, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, IonSearchbar, IonAlert, IonContent } from '@ionic/react';
 import { closeOutline } from 'ionicons/icons';
-import { getDB, saveDB, uid, fd, fc } from '../services/db';
+import { getDB, loadDB, saveDB, uid, fd, fc } from '../services/db';
 import { HistoryActions } from '../services/historyService';
 import StatusBadge from '../components/StatusBadge';
 
+// ═══ Validações ═══
+function validateEmail(email) {
+  if (!email) return true;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+function validateCPF(cpf) {
+  if (!cpf) return true;
+  const d = cpf.replace(/\D/g, '');
+  if (d.length === 11) {
+    if (/^(\d)\1{10}$/.test(d)) return false;
+    let s = 0; for (let i = 0; i < 9; i++) s += parseInt(d[i]) * (10 - i);
+    let r = 11 - (s % 11); if (r >= 10) r = 0;
+    if (r !== parseInt(d[9])) return false;
+    s = 0; for (let i = 0; i < 10; i++) s += parseInt(d[i]) * (11 - i);
+    r = 11 - (s % 11); if (r >= 10) r = 0;
+    return r === parseInt(d[10]);
+  }
+  if (d.length === 14) {
+    if (/^(\d)\1{13}$/.test(d)) return false;
+    const w1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2], w2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+    let s = 0; for (let i = 0; i < 12; i++) s += parseInt(d[i]) * w1[i];
+    let r = s % 11; const d1 = r < 2 ? 0 : 11 - r;
+    if (parseInt(d[12]) !== d1) return false;
+    s = 0; for (let i = 0; i < 13; i++) s += parseInt(d[i]) * w2[i];
+    r = s % 11; const d2 = r < 2 ? 0 : 11 - r;
+    return parseInt(d[13]) === d2;
+  }
+  return false;
+}
+function validatePhone(phone) {
+  if (!phone) return true;
+  const d = phone.replace(/\D/g, '');
+  return d.length >= 10 && d.length <= 11;
+}
+function formatCPF(v) {
+  const d = v.replace(/\D/g, '').slice(0, 14);
+  if (d.length <= 11) return d.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+  return d.replace(/(\d{2})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1/$2').replace(/(\d{4})(\d{1,2})$/, '$1-$2');
+}
+function formatPhone(v) {
+  const d = v.replace(/\D/g, '').slice(0, 11);
+  if (d.length <= 10) return d.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{4})(\d)/, '$1-$2');
+  return d.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d)/, '$1-$2');
+}
+
 export default function Clientes() {
   const [db, setDb] = useState(getDB);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    loadDB().then(() => { setDb({ ...getDB() }); setLoading(false); });
+  }, []);
   const [filter, setFilter] = useState('Todos');
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState({});
@@ -35,6 +85,9 @@ export default function Clientes() {
 
   const save = () => {
     if (!form.nome) return;
+    if (form.email && !validateEmail(form.email)) { alert('Email inválido.'); return; }
+    if (form.documento && !validateCPF(form.documento)) { alert('CPF/CNPJ inválido.'); return; }
+    if (form.telefone && !validatePhone(form.telefone)) { alert('Telefone inválido.'); return; }
     if (modal.mode === 'edit') {
       Object.assign(db.clientes.find(x => x.id === modal.id), form);
       HistoryActions.clientUpdated(form.nome);
@@ -71,7 +124,7 @@ export default function Clientes() {
       <IonSearchbar value={search} onIonInput={e => setSearch(e.detail.value)} placeholder="Buscar clientes..." style={{ marginBottom: 16 }} />
 
       {/* Table */}
-      {list.length ? (
+      {loading ? <div className='empty'><p>Carregando...</p></div> : list.length ? (
         <div className="tbl-wrap"><table>
           <thead><tr><th>Nome</th><th>E-mail</th><th>Telefone</th><th>Tipo</th><th>Status</th><th>Cadastro</th><th>Ações</th></tr></thead>
           <tbody>{list.map(c => (
@@ -80,9 +133,9 @@ export default function Clientes() {
               <td><span className="badge b-novo">{c.tipo}</span></td><td><StatusBadge status={c.status} /></td>
               <td className="td-mono">{fd(c.dataCadastro)}</td>
               <td className="actions-cell">
-                <button className="btn-icon" onClick={() => openView(c.id)}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-                <button className="btn-icon" onClick={() => openEdit(c.id)}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-                <button className="btn-icon" onClick={() => setConfirmDel(c.id)}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+                <button className="btn-icon" onClick={() => openView(c.id)}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg></button>
+                <button className="btn-icon" onClick={() => openEdit(c.id)}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg></button>
+                <button className="btn-icon" onClick={() => setConfirmDel(c.id)}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" /></svg></button>
               </td>
             </tr>
           ))}</tbody>
@@ -102,19 +155,25 @@ export default function Clientes() {
             <div className="field"><label>Nome / Razão Social</label><input value={form.nome || ''} onChange={e => setForm({ ...form, nome: e.target.value })} /></div>
             <div className="field-row">
               <div className="field"><label>E-mail</label><input value={form.email || ''} onChange={e => setForm({ ...form, email: e.target.value })} /></div>
-              <div className="field"><label>Telefone</label><input value={form.telefone || ''} onChange={e => setForm({ ...form, telefone: e.target.value })} /></div>
+              <div className="field"><label>Telefone</label><input value={form.telefone || ''} onChange={e => setForm({ ...form, telefone: formatPhone(e.target.value) })} /></div>
             </div>
             <div className="field-row">
-              <div className="field"><label>CPF/CNPJ</label><input value={form.documento || ''} onChange={e => setForm({ ...form, documento: e.target.value })} /></div>
+              <div className="field"><label>CPF/CNPJ</label><input value={form.documento || ''} onChange={e => setForm({ ...form, documento: formatCPF(e.target.value) })} /></div>
               <div className="field"><label>Tipo</label><select value={form.tipo || 'PJ'} onChange={e => setForm({ ...form, tipo: e.target.value })}><option>PF</option><option>PJ</option><option>ME</option></select></div>
             </div>
-            <div className="field"><label>Endereço</label><input value={form.endereco || ''} onChange={e => setForm({ ...form, endereco: e.target.value })} /></div>
-            <div className="field"><label>Status</label><select value={form.status || 'Ativo'} onChange={e => setForm({ ...form, status: e.target.value })}><option>Ativo</option><option>Inativo</option></select></div>
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8 }}>
-              <button className="btn btn-ghost" onClick={close}>Cancelar</button>
-              <button className="btn btn-primary" onClick={save}>Salvar</button>
+            <div className="field-row">
+              <div className="field"><label>Endereço</label><input value={form.endereco || ''} onChange={e => setForm({ ...form, endereco: e.target.value })} placeholder="Rua, número" /></div>
+              <div className="field"><label>Cidade</label><input value={form.cidade || ''} onChange={e => setForm({ ...form, cidade: e.target.value })} placeholder="Cidade" /></div>
             </div>
-          </div>
+            <div className="field-row">
+              <div className="field"><label>CEP</label><input value={form.cep || ''} onChange={e => setForm({ ...form, cep: e.target.value.replace(/\D/g, '').slice(0, 8).replace(/(\d{5})(\d)/, '$1-$2') })} placeholder="00000-000" /></div>
+              <div className="field"><label>Status</label><select value={form.status || 'Ativo'} onChange={e => setForm({ ...form, status: e.target.value })}><option>Ativo</option><option>Inativo</option></select></div>
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8 }}>
+                <button className="btn btn-ghost" onClick={close}>Cancelar</button>
+                <button className="btn btn-primary" onClick={save}>Salvar</button>
+              </div>
+            </div>
+           </div>
         </IonContent>
       </IonModal>
 

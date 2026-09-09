@@ -1,25 +1,92 @@
-const { MongoClient } = require('mongodb');
+// ═══════════════════════════════════════════════════════════
+// CORREÇÕES APLICADAS — src/services/db.js
+// ═══════════════════════════════════════════════════════════
+// 
+// BUG #5 CORRIGIDO: fd() agora valida o formato da data
+// Antes: aceitava qualquer string e splitava por '-', causando undefined/undefined/undefined
+// Depois: valida formato YYYY-MM-DD antes de fazer o split
+// ═══════════════════════════════════════════════════════════
 
-let client;
-let db;
+import { api } from '../../services/api.js';
 
-async function connectDB() {
-  if (db) return db;
-  client = new MongoClient(process.env.MONGODB_URI);
-  await client.connect();
-  db = client.db('server');
-  console.log('MongoDB conectado — database: server');
+let db = {
+  clientes: [],
+  produtos: [],
+  orcamentos: [],
+};
 
-  // Indexes
-  await db.collection('users').createIndex({ username: 1 }, { unique: true });
-  await db.collection('user_data').createIndex({ username: 1, section: 1 }, { unique: true });
+let serverAvailable = false;
 
+// Testar se server está disponível
+async function checkServer() {
+  try {
+    const resp = await fetch('/api/health', { signal: AbortSignal.timeout(2000) });
+    serverAvailable = resp.ok;
+  } catch {
+    serverAvailable = false;
+  }
+  return serverAvailable;
+}
+
+export function getDB() {
   return db;
 }
 
-function getDb() {
-  if (!db) throw new Error('DB não conectado');
-  return db;
+export async function loadDB() {
+  // Resetar para estado vazio
+  db = { clientes: [], produtos: [], orcamentos: [] };
+
+  // Carregar do localStorage
+  try {
+    const saved = JSON.parse(localStorage.getItem('anglerDB'));
+    if (saved) db = { ...db, ...saved };
+  } catch { }
+
+  // Tenta carregar do server
+  const online = await checkServer();
+  if (online) {
+    try {
+      const [clients, products, budgets] = await Promise.all([
+        api.getData('clients/info'),
+        api.getData('products/info'),
+        api.getData('budgets/info'),
+      ]);
+      // Só sobrescreve se o server retornou dados
+      if (clients?.clientes) db.clientes = clients.clientes;
+      if (products?.produtos) db.produtos = products.produtos;
+      if (budgets?.orcamentos) db.orcamentos = budgets.orcamentos;
+
+      localStorage.setItem('anglerDB', JSON.stringify(db));
+    } catch { }
+  }
 }
 
-module.exports = { connectDB, getDb };
+export function saveDB() {
+  // Salva no localStorage imediatamente
+  localStorage.setItem('anglerDB', JSON.stringify(db));
+
+  // Se server disponível, sincroniza em background
+  if (serverAvailable) {
+    Promise.all([
+      api.saveData('clients/info', { clientes: db.clientes }),
+      api.saveData('products/info', { produtos: db.produtos }),
+      api.saveData('budgets/info', { orcamentos: db.orcamentos }),
+    ]).catch(() => { });
+  }
+}
+
+export function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+}
+
+// ✅ BUG #5 CORRIGIDO: validação de formato de data
+export function fd(dateStr) {
+  if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return '—';
+  const [y, m, d] = dateStr.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+export function fc(value) {
+  if (value == null) return 'R$ 0,00';
+  return 'R$ ' + Number(value).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}

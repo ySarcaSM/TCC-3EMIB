@@ -14,6 +14,7 @@ import {
 
 /* ─── Sugestões ─── */
 const SUGGESTIONS = [
+  '/prompt',
   'Resumo dos meus clientes',
   'Qual cliente tem mais orçamentos?',
   'Quantos orçamentos foram aprovados?',
@@ -28,7 +29,14 @@ const SUGGESTIONS = [
 function buildContext() {
   const db = getDB();
   const formulas = getAllFormulas();
-  const clientes = db.clientes.map(c => `${c.nome} (${c.tipo}, ${c.status}, doc:${c.documento})`).join('; ') || 'Nenhum';
+  const clientes = db.clientes.map(c => {
+    const parts = [c.nome, c.tipo, c.status,
+    c.documento ? `doc:${c.documento}` : '', c.email ? `email:${c.email}` : '',
+    c.telefone ? `tel:${c.telefone}` : '', c.endereco ? `end:${c.endereco}` : '',
+    c.cidade ? `cidade:${c.cidade}` : '', c.cep ? `cep:${c.cep}` : '',
+    c.observacoes ? `obs:${c.observacoes}` : ''].filter(Boolean);
+    return parts.join(', ');
+  }).join('; ') || 'Nenhum';
   const produtos = db.produtos.map(p => `${p.nome} [${p.categoria}] R$${p.valor} estoque:${p.estoque} (${p.status})`).join('; ') || 'Nenhum';
   const orcamentos = db.orcamentos.map(o => {
     const cli = db.clientes.find(c => c.id === o.clienteId)?.nome || '?';
@@ -184,13 +192,13 @@ export default function AiAssistant() {
     setModelsLoading(true);
     const list = await loadModels();
     setAvailableModels(list);
-    const current = model;
-    if (!list.includes(current)) {
-      const newModel = list[0] || 'gemini-2.0-flash';
-      setModel(newModel);
-    }
+    setModel(prev => {
+      if (prev && list.includes(prev)) return prev;
+      if (prev && !list.includes(prev)) return prev;
+      return list[0] || 'gemini-2.0-flash';
+    });
     setModelsLoading(false);
-  }, [model]);
+  }, []);
 
   const showToast = (msg, color = 'success') => { setToast(msg); setToastColor(color); };
 
@@ -201,6 +209,20 @@ export default function AiAssistant() {
     const msg = (text || input).trim();
     if (!msg || loading) return;
     setInput('');
+
+    if (msg.toLowerCase() === '/prompt') {
+      const context = buildContext();
+      const statusText = serverOnline ? 'Online (MongoDB)' : 'Offline (localStorage)';
+      const promptMsg = {
+        role: 'assistant',
+        content: '**System Prompt completo:**\n\n```\n' + context + '\n```\n\n---\n**Modelo:** `' + model + '`\n**Servidor:** ' + statusText,
+        source: 'system',
+      };
+      const updated = [...messages, { role: 'user', content: '/prompt' }, promptMsg];
+      setMessages(updated);
+      saveHistoryLocally(updated);
+      return;
+    }
 
     const newMessages = [...messages, { role: 'user', content: msg }];
     setMessages(newMessages);

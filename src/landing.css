@@ -118,7 +118,7 @@
   align-items: center;
   justify-content: center;
   padding: 120px 24px 80px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .lp-hero-bg {
@@ -154,8 +154,8 @@
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px);
+    linear-gradient(rgba(255, 255, 255, .02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, .02) 1px, transparent 1px);
   background-size: 60px 60px;
   mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black, transparent);
   -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black, transparent);
@@ -248,7 +248,7 @@
 }
 
 .lp-hero-scroll {
-  position: absolute;
+  position: fixed;
   bottom: 32px;
   left: 50%;
   transform: translateX(-50%);
@@ -271,8 +271,15 @@
 }
 
 @keyframes lpBounce {
-  0%, 100% { transform: translateX(-50%) translateY(0); }
-  50% { transform: translateX(-50%) translateY(8px); }
+
+  0%,
+  100% {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  50% {
+    transform: translateX(-50%) translateY(8px);
+  }
 }
 
 /* ─── Sections ─── */
@@ -734,6 +741,7 @@
 }
 
 @media (max-width: 768px) {
+
   .lp-nav-links,
   .lp-nav-actions {
     display: none;

@@ -5,7 +5,7 @@ const { getDb } = require('../config/db');
 const router = express.Router();
 
 // GET — ler seção
-router.get('/*', auth, async (req, res) => {
+router.get('/*any', auth, async (req, res) => {
   try {
     const section = req.params[0];
     if (!section) return res.status(400).json({ error: 'Seção não informada.' });
@@ -20,7 +20,7 @@ router.get('/*', auth, async (req, res) => {
 });
 
 // PUT — salvar seção
-router.put('/*', auth, async (req, res) => {
+router.put('/*any', auth, async (req, res) => {
   try {
     const section = req.params[0];
     if (!section) return res.status(400).json({ error: 'Seção não informada.' });
@@ -39,7 +39,7 @@ router.put('/*', auth, async (req, res) => {
 });
 
 // DELETE — remover seção
-router.delete('/*', auth, async (req, res) => {
+router.delete('/*any', auth, async (req, res) => {
   try {
     const section = req.params[0];
     const db = getDb();

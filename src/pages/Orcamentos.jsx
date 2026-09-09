@@ -8,7 +8,7 @@ import FormulaPreview from '../components/FormulaPreview';
 import StatusBadge from '../components/StatusBadge';
 
 /* ─── Helpers de cálculo ─── */
-const IGNORE = new Set(['d','e','x','dx','dt','dy','dz']);
+const IGNORE = new Set(['d', 'e', 'x', 'dx', 'dt', 'dy', 'dz']);
 
 function getWords(text, constNames) {
   const cleaned = text.replace(/\\[a-zA-Z]+/g, '').replace(/[^a-zA-Z]/g, ' ');
@@ -141,7 +141,7 @@ export default function Orcamentos() {
 
   /* ─── Salvar ─── */
   const save = () => {
-    if (!form.descricao) { setToast('Preencha a descrição'); return; }
+    // Descrição é opcional
     const valor = formulaResult || 0;
     const data = {
       ...form,
@@ -187,7 +187,7 @@ export default function Orcamentos() {
         )}</div>
         <button className="btn btn-primary" onClick={openNew}>+ Novo Orçamento</button>
       </div>
-       <IonSearchbar
+      <IonSearchbar
         value={search}
         onIonInput={e => setSearch(e.detail.value)}
         placeholder="Buscar por código, cliente, descrição ou fórmula..."
@@ -207,10 +207,10 @@ export default function Orcamentos() {
               <td><StatusBadge status={o.status} /></td>
               <td className="td-mono">{fd(o.data)}</td>
               <td className="actions-cell">
-                <button className="btn-icon" onClick={() => openView(o.id)}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-                {o.status !== 'Aprovado' && <button className="btn-icon" onClick={() => openEdit(o.id)}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>}
+                <button className="btn-icon" onClick={() => openView(o.id)}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg></button>
+                {o.status !== 'Aprovado' && <button className="btn-icon" onClick={() => openEdit(o.id)}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg></button>}
                 {/* ✅ BUG #1 CORRIGIDO: adicionado } antes de > */}
-                <button className="btn-icon" onClick={() => setConfirmDel(o.id)}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+                <button className="btn-icon" onClick={() => setConfirmDel(o.id)}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" /></svg></button>
               </td>
             </tr>
           ))}</tbody>
@@ -231,7 +231,7 @@ export default function Orcamentos() {
             {/* Info básica */}
             <div className="field-row">
               <div className="field"><label>Código</label><input value={form.codigo || ''} onChange={e => setForm({ ...form, codigo: e.target.value })} /></div>
-              <div className="field"><label>Status</label><select value={form.status || 'Rascunho'} onChange={e => setForm({ ...form, status: e.target.value })}>{['Rascunho','Enviado','Aprovado','Rejeitado','Expirado'].map(s => <option key={s}>{s}</option>)}</select></div>
+              <div className="field"><label>Status</label><select value={form.status || 'Rascunho'} onChange={e => setForm({ ...form, status: e.target.value })}>{['Rascunho', 'Enviado', 'Aprovado', 'Rejeitado', 'Expirado'].map(s => <option key={s}>{s}</option>)}</select></div>
             </div>
             <div className="field"><label>Cliente</label><select value={form.clienteId || ''} onChange={e => setForm({ ...form, clienteId: e.target.value })}>{db.clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}</select></div>
             <div className="field"><label>Descrição</label><input value={form.descricao || ''} onChange={e => setForm({ ...form, descricao: e.target.value })} /></div>
